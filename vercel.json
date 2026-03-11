@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "buildCommand": "npx prisma generate && npx prisma db push --accept-data-loss && npx next build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "env": {
+    "PRISMA_GENERATE_DATAPROXY": "true"
+  }
+}
