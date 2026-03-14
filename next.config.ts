@@ -1,7 +1,19 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  serverExternalPackages: ['pdf-parse', 'mammoth'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: '*.amazonaws.com' },
+    ],
+    dangerouslyAllowSVG: true,
+  },
+}
 
-export default nextConfig;
+export default nextConfig

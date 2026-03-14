@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  designation  String   // Engineer, Supervisor, Technician
+  passwordHash String
+  role         String   @default("TECHNICIAN") // ENGINEER, SUPERVISOR, TECHNICIAN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  dailyMIS             DailyMIS[]
+  maintenanceActivities MaintenanceActivity[]
+  chatMessages         ChatMessage[]
+  chatGroups           ChatGroupMember[]
+  leaderboardScore     LeaderboardScore?
+  weeklyWinners        WeeklyWinner[]
+  pushSubscriptions    PushSubscription[]
+}
+
+model Equipment {
+  id              String   @id @default(cuid())
+  name            String
+  tagNumber       String   @unique
+  area            String
+  equipmentType   String
+  installDate     DateTime?
+  manufacturer    String?
+  status          String   @default("ACTIVE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Motor {
+  id                 String   @id @default(cuid())
+  motorTag           String   @unique
+  motorName          String
+  area               String
+  powerKw            Float
+  voltage            String
+  rpm                Int
+  manufacturer       String?
+  driveEndBearing    String?
+  nonDriveEndBearing String?
+  couplingType       String?
+  installDate        DateTime?
+  status             String   @default("RUNNING")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model SparePart {
+  id          String   @id @default(cuid())
+  partName    String
+  partNumber  String
+  equipment   String?
+  quantity    Int      @default(0)
+  location    String?
+  supplier    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DailyMIS {
+  id            String   @id @default(cuid())
+  date          DateTime
+  shift         String   // A, B, C
+  area          String
+  equipmentName String
+  tagNumber     String?
+  workType      String   // PMI, RPMI, Cable, Lighting, Breaker, Other
+  description   String
+  engineerName  String
+  aiScore       Int?
+  status        String   @default("DRAFT") // DRAFT, APPROVED
+  source        String   @default("MANUAL") // MANUAL, CHAT_AI
+  createdById   String?
+  createdBy     User?    @relation(fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MaintenanceActivity {
+  id              String   @id @default(cuid())
+  equipmentName   String
+  tagNumber       String?
+  area            String
+  description     String
+  beforeImageUrl  String?
+  afterImageUrl   String?
+  technicianName  String
+  aiScore         Int?
+  activityType    String?
+  createdById     String?
+  createdBy       User?    @relation(fields: [createdById], references: [id])
+  completedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+}
+
+model ChatGroup {
+  id        String            @id @default(cuid())
+  name      String
+  area      String
+  createdAt DateTime          @default(now())
+  messages  ChatMessage[]
+  members   ChatGroupMember[]
+}
+
+model ChatGroupMember {
+  id        String    @id @default(cuid())
+  groupId   String
+  userId    String
+  group     ChatGroup @relation(fields: [groupId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  joinedAt  DateTime  @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model ChatMessage {
+  id              String   @id @default(cuid())
+  groupId         String
+  content         String
+  imageUrl        String?
+  messageType     String   @default("TEXT") // TEXT, IMAGE, MIS_TRIGGER
+  extractedMisId  String?
+  senderId        String
+  sender          User     @relation(fields: [senderId], references: [id])
+  group           ChatGroup @relation(fields: [groupId], references: [id])
+  createdAt       DateTime @default(now())
+}
+
+model MaintenanceHistory {
+  id              String   @id @default(cuid())
+  equipmentTag    String
+  equipmentName   String
+  maintenanceType String
+  description     String
+  technicianName  String
+  imageUrls       String   @default("[]") // JSON array stored as string
+  performedAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+}
+
+model MotorInspection {
+  id            String   @id @default(cuid())
+  motorTag      String
+  motorName     String
+  area          String
+  category      String   // '10kV', '3kV', 'LT'
+  currentR      Float?   // R-phase current (A)
+  currentY      Float?   // Y-phase current (A)
+  currentB      Float?   // B-phase current (A)
+  ratedCurrent  Float?   // rated current for % loading calc
+  loadingPct    Float?   // average % loading
+  abnormality   String?  // any abnormality found
+  inspectedBy   String
+  shift         String   @default("General") // 'A', 'B', 'C', 'General'
+  beforeImageUrl String?
+  afterImageUrl  String?
+  aiScore       Int?
+  inspectedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model LeaderboardScore {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  totalPoints   Int      @default(0)
+  weeklyPoints  Int      @default(0)
+  monthlyPoints Int      @default(0)
+  lastUpdated   DateTime @updatedAt
+}
+
+model WeeklyWinner {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  weekStart   DateTime
+  weekEnd     DateTime
+  totalPoints Int
+  createdAt   DateTime @default(now())
+}
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String?  // Optional: link to user if logged in
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model VerificationRequest {
+  id        String   @id @default(cuid())
+  email     String
+  token     String
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}

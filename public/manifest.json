@@ -1,0 +1,30 @@
+{
+  "theme_color": "#0a0f1e",
+  "background_color": "#0a0f1e",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/dashboard",
+  "name": "ELECTRICAL MAINTENANCE APP",
+  "short_name": "ELECTRICAL APP",
+  "description": "Premium Industrial Electrical Maintenance Powered by VoltMind AI",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
