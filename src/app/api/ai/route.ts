@@ -92,6 +92,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   const question = body.question
   const attachments = body.attachments || []
+  const history = body.history || []
 
   if (!question && (!attachments || attachments.length === 0)) {
     return NextResponse.json({ error: 'Question or attachment required' }, { status: 400 })
@@ -390,6 +391,14 @@ ${specificMotorContext}
       const messages: any[] = [
         { role: 'system', content: systemPrompt },
       ]
+
+      // Add History (limit to last 10 for safety)
+      const recentHistory = history.slice(-10).map((h: any) => ({
+        role: h.role === 'user' ? 'user' : 'assistant',
+        content: h.content
+      })).filter((h: any) => h.content && typeof h.content === 'string')
+      
+      messages.push(...recentHistory)
 
       if (attachments && attachments.length > 0) {
         const contentParts: any[] = [{ type: 'text', text: question || 'Please process the attached file(s).' }]

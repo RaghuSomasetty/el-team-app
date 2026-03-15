@@ -201,7 +201,12 @@ export default function AIAssistantPage() {
     setMessages(prev => [...prev, { role: 'user', content: displayContent }])
     setInput(''); const currentAtt = [...attachments]; setAttachments([]); setLoading(true)
     try {
-      const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, attachments: currentAtt }) })
+      const history = messages.slice(1).map(m => ({ role: m.role, content: m.content }))
+      const res = await fetch('/api/ai', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ question, attachments: currentAtt, history }) 
+      })
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.answer, type: data.type, actions: data.actions }])
     } catch {
