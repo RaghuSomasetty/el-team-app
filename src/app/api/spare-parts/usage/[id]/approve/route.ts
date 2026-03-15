@@ -5,8 +5,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: usageId } = await params
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -17,7 +18,6 @@ export async function PATCH(
 
   try {
     const { status, reason } = await req.json()
-    const usageId = params.id
 
     if (!['APPROVED', 'REJECTED'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
