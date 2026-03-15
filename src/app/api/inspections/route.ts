@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { motorTag, motorName, area, category, currentR, currentY, currentB, ratedCurrent, abnormality, inspectedBy, shift, beforeImageUrl, afterImageUrl } = body
+    const { motorTag, motorName, area, category, currentR, currentY, currentB, ratedCurrent, abnormality, inspectedBy, shift } = body
 
     if (!motorTag || !inspectedBy) {
       return NextResponse.json({ error: 'motorTag and inspectedBy are required' }, { status: 400 })
@@ -82,8 +82,8 @@ export async function POST(req: Request) {
       userRole: (session.user as any).role,
       activityType: 'MOTOR_INSPECTION',
       description: finalAbnormality || 'Completed motor inspection',
-      hasImages: !!(beforeImageUrl || afterImageUrl),
-      imageCount: [beforeImageUrl, afterImageUrl].filter(Boolean).length
+      hasImages: false,
+      imageCount: 0
     })
 
     const record = await model.create({
@@ -98,10 +98,8 @@ export async function POST(req: Request) {
         ratedCurrent: rated,
         loadingPct,
         abnormality: finalAbnormality || null,
-        inspectedBy: session.user.name || 'Unknown',
+        inspectedBy: session.user.name || inspectedBy || 'Unknown',
         shift: shift || 'General',
-        beforeImageUrl,
-        afterImageUrl,
         aiScore: points
       },
     })

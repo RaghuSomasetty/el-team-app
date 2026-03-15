@@ -57,8 +57,6 @@ export default function InspectionsPage() {
     inspectedBy: '', 
     shift: 'General' 
   })
-  const [beforeImg, setBeforeImg] = useState<string>('')
-  const [afterImg, setAfterImg] = useState<string>('')
   const detailRef = useRef<HTMLDivElement>(null)
 
   // Helper to determine category from voltage
@@ -120,8 +118,6 @@ export default function InspectionsPage() {
     setInspections([])
     loadInspections(m.motorTag)
     setForm(f => ({ ...f, currentR: '', currentY: '', currentB: '', abnormality: '' }))
-    setBeforeImg('')
-    setAfterImg('')
 
     // Auto-scroll to detail on mobile/tablet
     if (window.innerWidth < 1024) {
@@ -131,28 +127,6 @@ export default function InspectionsPage() {
     }
   }
 
-  const handleImg = (e: React.ChangeEvent<HTMLInputElement>, type: 'before' | 'after') => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        const MAX_WIDTH = 800
-        const scaleSize = MAX_WIDTH / img.width
-        canvas.width = MAX_WIDTH
-        canvas.height = img.height * scaleSize
-        const ctx = canvas.getContext('2d')
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7)
-        if (type === 'before') setBeforeImg(compressedBase64)
-        else setAfterImg(compressedBase64)
-      }
-      img.src = reader.result as string
-    }
-    reader.readAsDataURL(file)
-  }
 
   const [exporting, setExporting] = useState(false)
 
@@ -199,14 +173,10 @@ export default function InspectionsPage() {
         abnormality: form.abnormality || null,
         inspectedBy: form.inspectedBy,
         shift: form.shift,
-        beforeImageUrl: beforeImg || null,
-        afterImageUrl: afterImg || null,
       }),
     })
     if (res.ok) {
       setForm(f => ({ ...f, currentR: '', currentY: '', currentB: '', abnormality: '' }))
-      setBeforeImg('')
-      setAfterImg('')
       await loadInspections(selectedMotor.motorTag)
     }
     setSaving(false)
@@ -365,29 +335,6 @@ export default function InspectionsPage() {
                     style={{ resize: 'vertical', minHeight: '120px' }} />
                 </div>
 
-                {/* Photo Upload Section */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                  {(['before', 'after'] as const).map(type => {
-                    const img = type === 'before' ? beforeImg : afterImg
-                    return (
-                      <div key={type}>
-                        <label className="form-label" style={{ marginBottom: '8px', display: 'block', fontSize: '11px', color: type === 'before' ? 'var(--accent-amber)' : 'var(--accent-green)' }}>
-                          {type === 'before' ? '🟡 Before (Pre-check)' : '🟢 After (Post-check)'}
-                        </label>
-                        <label style={{ display: 'block', cursor: 'pointer' }}>
-                          <div style={{ height: '100px', border: '1px dashed var(--border-color)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', overflow: 'hidden' }}>
-                            {img ? (
-                              <img src={img} alt={type} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <span style={{ fontSize: '20px' }}>📷</span>
-                            )}
-                          </div>
-                          <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => handleImg(e, type)} />
-                        </label>
-                      </div>
-                    )
-                  })}
-                </div>
 
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving ? '⏳ Saving...' : '✅ Submit Reading'}
@@ -435,7 +382,6 @@ export default function InspectionsPage() {
                           <th>Y (A)</th>
                           <th>B (A)</th>
                           <th>Loading</th>
-                          <th style={{ minWidth: '80px' }}>Photos</th>
                           <th>Abnormality</th>
                           <th>Inspector</th>
                         </tr>
@@ -451,20 +397,6 @@ export default function InspectionsPage() {
                             <td style={{ color: '#f59e0b', fontWeight: 600 }}>{r.currentY ?? '—'}</td>
                             <td style={{ color: '#3b82f6', fontWeight: 600 }}>{r.currentB ?? '—'}</td>
                             <td><LoadingBadge pct={r.loadingPct} /></td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '4px' }}>
-                                {(r as any).beforeImageUrl ? (
-                                  <img src={(r as any).beforeImageUrl} alt="before" style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', cursor: 'pointer' }} onClick={() => window.open((r as any).beforeImageUrl)} />
-                                ) : (
-                                  <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-muted)' }}>—</div>
-                                )}
-                                {(r as any).afterImageUrl ? (
-                                  <img src={(r as any).afterImageUrl} alt="after" style={{ width: '32px', height: '32px', borderRadius: '4px', objectFit: 'cover', cursor: 'pointer' }} onClick={() => window.open((r as any).afterImageUrl)} />
-                                ) : (
-                                  <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-muted)' }}>—</div>
-                                )}
-                              </div>
-                            </td>
                             <td><AbnormalityBadge text={r.abnormality} /></td>
                             <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{r.inspectedBy}</td>
                           </tr>
