@@ -8,9 +8,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parts = await prisma.sparePart.findMany({ orderBy: { partName: 'asc' }, take: 500 })
-  return NextResponse.json(parts, {
-    headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' },
-  })
+  return NextResponse.json(parts)
 }
 
 export async function POST(req: Request) {
