@@ -27,6 +27,8 @@ model User {
   leaderboardScore     LeaderboardScore?
   weeklyWinners        WeeklyWinner[]
   pushSubscriptions    PushSubscription[]
+  reportedUsages       SparePartUsage[] @relation("ReportedUsage")
+  approvedUsages       SparePartUsage[] @relation("ApprovedUsage")
 }
 
 model Equipment {
@@ -70,6 +72,7 @@ model SparePart {
   supplier    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  usages      SparePartUsage[]
 }
 
 model DailyMIS {
@@ -211,4 +214,19 @@ model VerificationRequest {
   createdAt DateTime @default(now())
 
   @@unique([email, token])
+}
+
+model SparePartUsage {
+  id            String    @id @default(cuid())
+  sparePartId   String
+  sparePart     SparePart @relation(fields: [sparePartId], references: [id])
+  quantityUsed  Int
+  reportedById  String
+  reportedBy    User      @relation("ReportedUsage", fields: [reportedById], references: [id])
+  approvedById  String?
+  approvedBy    User?     @relation("ApprovedUsage", fields: [approvedById], references: [id])
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reason        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

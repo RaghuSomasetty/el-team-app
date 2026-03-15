@@ -241,6 +241,13 @@ body:has(.ai-assistant-page) {
 .hamburger-btn { display: none; }
 .topbar-title { font-size: 18px; font-weight: 600; }
 .topbar-subtitle { font-size: 12px; color: var(--text-secondary); }
+.mobile-logo {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
 
 .topbar-right { display: flex; align-items: center; gap: 12px; }
 
@@ -389,6 +396,9 @@ body:has(.ai-assistant-page) {
     font-size: 20px;
     width: 40px;
     height: 40px;
+  }
+  .mobile-logo {
+    display: block;
   }
   .grid-sidebar-layout {
     grid-template-columns: 1fr;

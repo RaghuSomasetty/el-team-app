@@ -313,16 +313,33 @@ ${specificMotorContext}
         {
           type: 'function',
           function: {
-            name: 'update_spare_part_quantity',
-            description: 'Update the quantity of a spare part in stock. Can use partNumber OR partName.',
+            name: 'report_spare_part_usage',
+            description: 'Report that a spare part was used. This will create a pending request for engineer approval. Stock is NOT deducted until approved.',
             parameters: {
               type: 'object',
               properties: {
                 partNumber: { type: 'string', description: 'Part number of the spare part' },
                 partName: { type: 'string', description: 'Name of the spare part (use if partNumber is unknown)' },
-                quantity: { type: 'number', description: 'New quantity in stock' },
+                quantityUsed: { type: 'number', description: 'Quantity used in the maintenance activity' },
+                reason: { type: 'string', description: 'Why this part was used (e.g. bearing failed)' },
               },
-              required: ['quantity'],
+              required: ['quantityUsed'],
+            },
+          },
+        },
+        {
+          type: 'function',
+          function: {
+            name: 'approve_spare_part_usage',
+            description: 'Approve a pending spare part usage request. Only for Engineers/Supervisors.',
+            parameters: {
+              type: 'object',
+              properties: {
+                usageId: { type: 'string', description: 'ID of the usage request to approve' },
+                status: { type: 'string', enum: ['APPROVED', 'REJECTED'], description: 'Whether to approve or reject' },
+                reason: { type: 'string', description: 'Reason for approval/rejection' },
+              },
+              required: ['usageId', 'status'],
             },
           },
         },
@@ -447,22 +464,53 @@ ${specificMotorContext}
                 },
               });
               result = `[OK] Maintenance history record added for ${args.equipmentTag}`;
-            } else if (fnName === 'update_spare_part_quantity') {
+            } else if (fnName === 'report_spare_part_usage') {
               let part = null;
               if (args.partNumber) {
                 part = await prisma.sparePart.findFirst({ where: { partNumber: args.partNumber } });
               }
               if (!part && args.partName) {
-                // Fuzzy match by name if partNumber not found
                 const allParts = await prisma.sparePart.findMany();
                 part = allParts.find(p => p.partName.toLowerCase().includes(args.partName.toLowerCase()));
               }
 
               if (!part) { 
-                result = `[ERROR] Part "${args.partNumber || args.partName}" not found in database. Use add_spare_part to create it.`; 
+                result = `[ERROR] Part "${args.partNumber || args.partName}" not found.`; 
               } else {
-                await prisma.sparePart.update({ where: { id: part.id }, data: { quantity: args.quantity } });
-                result = `[OK] Spare part "${part.partName}" quantity updated to ${args.quantity}`;
+                const usage = await prisma.sparePartUsage.create({
+                  data: {
+                    sparePartId: part.id,
+                    quantityUsed: args.quantityUsed,
+                    reason: args.reason || 'Reported via AI Assistant',
+                    reportedById: (session.user as any).id,
+                    status: 'PENDING',
+                  }
+                });
+                result = `[OK] Usage request created for "${part.partName}" (Qty: ${args.quantityUsed}). It is currently PENDING approval from an engineer. Usage ID: ${usage.id}`;
+              }
+            } else if (fnName === 'approve_spare_part_usage') {
+              const role = (session.user as any).role;
+              if (role !== 'ENGINEER' && role !== 'SUPERVISOR') {
+                result = `[ERROR] Only engineers or supervisors can approve usage. Your role is ${role}.`;
+              } else {
+                const usage = await prisma.sparePartUsage.findUnique({ where: { id: args.usageId }, include: { sparePart: true } });
+                if (!usage) { result = `[ERROR] Usage request ${args.usageId} not found.`; }
+                else if (usage.status !== 'PENDING') { result = `[ERROR] Request is already ${usage.status}.`; }
+                else {
+                  await prisma.$transaction(async (tx) => {
+                    await tx.sparePartUsage.update({
+                      where: { id: args.usageId },
+                      data: { status: args.status, approvedById: (session.user as any).id, reason: args.reason }
+                    });
+                    if (args.status === 'APPROVED') {
+                      await tx.sparePart.update({
+                        where: { id: usage.sparePartId },
+                        data: { quantity: { decrement: usage.quantityUsed } }
+                      });
+                    }
+                  });
+                  result = `[OK] Usage request ${args.usageId} successfully ${args.status}. Stock ${args.status === 'APPROVED' ? 'deducted' : 'unchanged'}.`;
+                }
               }
             } else if (fnName === 'add_spare_part') {
               const newPart = await prisma.sparePart.create({

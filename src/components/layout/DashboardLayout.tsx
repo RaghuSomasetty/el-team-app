@@ -44,6 +44,7 @@ export default function DashboardLayout({ title, subtitle, children, actions }: 
             >
               ☰
             </button>
+            <img src="/logo.png" alt="VoltMind Logo" className="mobile-logo" />
             <div>
               <div className="topbar-title">{title}</div>
               {subtitle && <div className="topbar-subtitle">{subtitle}</div>}
