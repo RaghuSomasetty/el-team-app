@@ -42,6 +42,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
+    
+    // Prompt for push notifications
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      setTimeout(() => {
+        Notification.requestPermission().then(p => {
+          if (p === 'granted') window.location.reload()
+        })
+      }, 3000)
+    }
   }, [status, router])
 
   useEffect(() => {
