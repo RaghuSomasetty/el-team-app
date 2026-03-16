@@ -10,7 +10,7 @@ interface Champion {
   designation: string
 }
 
-export default function LeaderboardBanner() {
+export default function WeeklyWinnerBanner() {
   const [champion, setChampion] = useState<Champion | null>(null)
   const [loading, setLoading] = useState(true)
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -80,7 +80,7 @@ export default function LeaderboardBanner() {
   if (loading || !champion) return null
 
   return (
-    <div className="mb-10 antialiased">
+    <div className="mb-10 antialiased" style={{ border: '2px solid red' }}>
       <Link href="/dashboard/leaderboard" className="block focus:outline-none">
         <motion.div 
           initial={{ opacity: 0, scale: 0.99 }}

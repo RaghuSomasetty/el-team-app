@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import FadeIn from '@/components/animations/FadeIn'
-import LeaderboardBanner from '@/components/dashboard/LeaderboardBanner'
+import WeeklyWinnerBanner from '@/components/dashboard/WeeklyWinnerBanner'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
@@ -115,7 +115,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout title="Dashboard" subtitle="Electrical Maintenance Overview">
-      <LeaderboardBanner />
+      <WeeklyWinnerBanner />
       {/* Live indicator */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
         <span className="dot-live" />
