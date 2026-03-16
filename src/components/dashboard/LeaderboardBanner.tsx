@@ -82,104 +82,109 @@ export default function LeaderboardBanner() {
   if (loading || !champion) return null
 
   return (
-    <div className="mb-8">
-      <Link href="/dashboard/leaderboard" className="block outline-none">
+    <div className="mb-10 antialiased">
+      <Link href="/dashboard/leaderboard" className="block focus:outline-none">
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileHover={{ scale: 1.005, translateY: -2 }}
-          className="relative overflow-hidden rounded-2xl p-px bg-gradient-to-r from-amber-500/50 via-yellow-500/20 to-amber-600/50 group cursor-pointer shadow-2xl shadow-amber-500/10"
+          initial={{ opacity: 0, y: 30, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="group relative"
         >
-          {/* Inner Content with Glassmorphism */}
-          <div className="relative bg-[#0f172a]/90 backdrop-blur-xl rounded-[15px] p-5 sm:p-8 overflow-hidden">
+          {/* Main Card Container */}
+          <div className="relative overflow-hidden rounded-[24px] border border-white/5 bg-[#0a0f1d] p-6 sm:p-10 shadow-2xl transition-all duration-500 group-hover:border-amber-500/20 group-hover:shadow-amber-500/5">
             
-            {/* Animated Flare / Glowing Orbs */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] group-hover:bg-amber-500/20 transition-all duration-1000"></div>
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] group-hover:bg-blue-500/10 transition-all duration-1000"></div>
-            
-            {/* Tech Pattern Overlay */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.627 0l.83.828-1.415 1.415L51.8 0h2.827zM5.373 0l-.83.828L5.96 2.243 8.2 0H5.374zM48.97 0l3.657 3.657-1.414 1.414L46.143 0h2.828zM11.03 0L7.372 3.657 8.787 5.07 13.857 0H11.03zm32.284 0L49.743 6.43l-1.414 1.414L42.2 0h1.114zM16.686 0L10.257 6.43l1.414 1.414L17.8 0h-1.114zM37.657 0L44.086 6.43l-1.414 1.414L36.543 0h1.114zM22.343 0L15.914 6.43l1.414 1.414L23.457 0h-1.114zM28.97 0L35.4 6.43l-1.414 1.414L27.857 0h1.114zM32.343 0L25.914 6.43l1.414 1.414L33.457 0h-1.114z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E")` }}></div>
+            {/* Elegant Background Accents */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#1a2035] via-transparent to-transparent opacity-40"></div>
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-amber-500/5 to-transparent pointer-events-none"></div>
+            <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-amber-500/10 rounded-full blur-[100px] group-hover:bg-amber-500/20 transition-all duration-1000"></div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
-              {/* Trophy Section */}
-              <div className="relative flex-shrink-0">
-                <motion.div 
-                  animate={{ 
-                    rotate: [0, -5, 5, -5, 0],
-                    scale: [1, 1.05, 1, 1.05, 1]
-                  }}
-                  transition={{ 
-                    duration: 5, 
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 flex items-center justify-center rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.4)] border border-amber-300/30"
-                >
-                  <span className="text-3xl sm:text-4xl drop-shadow-md">🏆</span>
-                </motion.div>
-                {/* Ring effect */}
-                <div className="absolute inset-0 rounded-2xl border-2 border-amber-400/20 scale-125 animate-ping opacity-20" style={{ animationDuration: '3s' }}></div>
-              </div>
-
-              {/* Text Section */}
-              <div className="flex-grow text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-                  <span className="h-px w-6 bg-amber-500/50 hidden sm:block"></span>
-                  <div className="text-[10px] sm:text-xs font-black text-amber-500 uppercase tracking-[0.2em]">
-                    Weekly Performance Champion
-                  </div>
+            {/* Content Layout */}
+            <div className="relative z-20 flex flex-col md:flex-row items-center justify-between gap-8">
+              
+              <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+                {/* Trophy/Icon Workspace */}
+                <div className="relative">
+                  <motion.div 
+                    whileHover={{ rotate: 15, scale: 1.1 }}
+                    className="relative z-10 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#1e293b] border border-white/10 shadow-inner group/icon"
+                  >
+                    <span className="text-4xl drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">✨</span>
+                    {/* Animated Crown/Icon Overlay */}
+                    <div className="absolute -top-3 -right-3 h-8 w-8 rounded-full bg-amber-500 flex items-center justify-center text-[14px] shadow-lg border-2 border-[#0a0f1d]">
+                      🏆
+                    </div>
+                  </motion.div>
+                  {/* Subtle Halo */}
+                  <div className="absolute inset-0 -m-4 bg-amber-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
                 </div>
-                
-                <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2 leading-tight">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-amber-100 to-amber-200">
+
+                {/* Information Block */}
+                <div>
+                  <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                    <span className="h-[2px] w-8 bg-gradient-to-r from-amber-500 to-transparent"></span>
+                    <span className="text-[11px] font-black uppercase tracking-[0.3em] text-amber-500/80">
+                      Plant Performance Leader
+                    </span>
+                  </div>
+                  
+                  <h2 className="mb-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-white md:text-5xl">
                     {champion.name}
-                  </span>
-                </h3>
-                
-                <div className="flex items-center justify-center sm:justify-start gap-3">
-                  <div className="bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-2">
-                    <span className="text-amber-500 font-bold text-sm">{champion.points}</span>
-                    <span className="text-amber-500/60 text-[10px] uppercase font-bold tracking-widest">Points</span>
+                  </h2>
+                  
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                    <div className="flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 transition-colors group-hover:bg-white/10">
+                      <span className="text-sm font-bold text-amber-500">{champion.points}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Points</span>
+                    </div>
+                    <div className="h-4 w-px bg-white/10"></div>
+                    <span className="text-sm font-medium text-slate-400">
+                      Weekly Achievement Honor
+                    </span>
                   </div>
-                  <div className="h-4 w-px bg-white/10"></div>
-                  <p className="text-xs sm:text-sm text-slate-400 font-medium italic">
-                    "{champion.designation} — Leading by example"
-                  </p>
                 </div>
               </div>
 
-              {/* CTA Section */}
-              <div className="flex-shrink-0">
-                <div className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all font-bold text-xs uppercase tracking-widest text-slate-300 group-hover:text-amber-500 flex items-center gap-2">
-                  Stats <span className="group-hover:translate-x-1 transition-transform">→</span>
+              {/* Action/Badge Area */}
+              <div className="flex flex-col items-center md:items-end gap-3 flex-shrink-0">
+                <div className="text-right hidden md:block">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</p>
+                  <p className="text-xs font-medium text-amber-500 italic">"Outstanding Leadership"</p>
+                </div>
+                <div className="flex h-12 items-center gap-4 rounded-xl bg-amber-500 px-6 font-black text-[11px] uppercase tracking-[0.2em] text-[#0a0f1d] transition-all hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] active:scale-95">
+                  View Full Ranking ➔
                 </div>
               </div>
+
             </div>
+
+            {/* Decorative Grid Line */}
+            <div className="absolute bottom-0 left-0 h-[1px] w-full bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
           </div>
         </motion.div>
       </Link>
 
-      {/* Premium Notification Prompt */}
+      {/* Modern Subscription Banner */}
       {!isSubscribed && permission !== 'denied' && (
         <motion.div 
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="mt-3 overflow-hidden"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 flex flex-col sm:flex-row items-center justify-between rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 transition-all hover:bg-blue-500/10"
         >
-          <div className="bg-gradient-to-r from-blue-600/10 to-transparent border-l-2 border-blue-500 rounded-r-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
-                <span className="text-lg">🔔</span>
-              </div>
-              <p className="text-xs text-blue-100/80 font-medium">Get real-time alerts when new plant champions are crowned!</p>
+          <div className="mb-4 sm:mb-0 flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400">
+              <span className="text-xl">🔔</span>
             </div>
-            <button 
-              onClick={(e) => { e.preventDefault(); subscribe(); }}
-              className="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-900/40 hover:scale-105 active:scale-95"
-            >
-              Enable Mobile Alerts
-            </button>
+            <div>
+              <p className="text-sm font-bold text-white">Join the Community Alerts</p>
+              <p className="text-xs text-slate-400">Stay informed on weekly performance and plant achievements.</p>
+            </div>
           </div>
+          <button 
+            onClick={(e) => { e.preventDefault(); subscribe(); }}
+            className="w-full sm:w-auto rounded-lg bg-blue-600 px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg shadow-blue-900/40 hover:bg-blue-500 hover:scale-[1.02]"
+          >
+            Enable Alerts
+          </button>
         </motion.div>
       )}
     </div>
