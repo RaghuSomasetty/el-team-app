@@ -19,9 +19,9 @@ const navItems = [
     { href: '/dashboard/history', icon: '📜', label: 'History' },
   ]},
   { section: 'Database', items: [
+    { href: '/dashboard/battery-inspection', icon: '🔋', label: 'Battery Inspection' },
     { href: '/dashboard/motors', icon: '⚙️', label: 'Motor Database' },
     { href: '/dashboard/inspections', icon: '⚡', label: 'Motor Inspection' },
-    { href: '/dashboard/battery-inspection', icon: '🔋', label: 'Battery Inspection' },
     { href: '/dashboard/equipment', icon: '🔌', label: 'Equipment' },
     { href: '/dashboard/spare-parts', icon: '🔧', label: 'Spare Parts' },
   ]},
@@ -44,7 +44,7 @@ export default function Sidebar({ mobileOpen, onClose }: Props) {
   const { data: session } = useSession()
   const role = (session?.user as any)?.role || 'TECHNICIAN'
 
-  console.log('Sidebar Debug:', { role, pathname, navSections: navItems.length })
+  console.log('Sidebar Updated at:', '11:53 AM', { role, pathname })
   
   return (
     <>
