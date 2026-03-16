@@ -44,6 +44,8 @@ export default function Sidebar({ mobileOpen, onClose }: Props) {
   const { data: session } = useSession()
   const role = (session?.user as any)?.role || 'TECHNICIAN'
 
+  console.log('Sidebar Debug:', { role, pathname, navSections: navItems.length })
+  
   return (
     <>
       {mobileOpen && <div className="sidebar-overlay" onClick={onClose} />}
