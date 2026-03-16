@@ -240,14 +240,22 @@ export default function DashboardPage() {
 
         <div className="card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '24px' }}>
           <div className="chart-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-            <span>🏆 Top Performers</span>
-            <span style={{ fontSize: '11px', color: 'var(--accent-blue)', cursor: 'pointer' }} onClick={() => router.push('/dashboard/leaderboard')}>View All</span>
+            <span className="flex items-center gap-2">
+              <span className="text-xl">🏆</span> 
+              <span className="font-black uppercase tracking-widest text-[11px] text-white/90">Top Performers</span>
+            </span>
+            <span 
+              className="text-[10px] font-black uppercase tracking-widest text-blue-400 cursor-pointer hover:text-blue-300 transition-colors" 
+              onClick={() => router.push('/dashboard/leaderboard')}
+            >
+              View Ranking →
+            </span>
           </div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {leaderboard.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                No rankings available yet.
+                <p className="text-xs font-bold uppercase tracking-widest">No rankings available yet</p>
               </div>
             ) : (
               leaderboard.map((user, idx) => (
@@ -256,35 +264,36 @@ export default function DashboardPage() {
                   alignItems: 'center', 
                   gap: '12px', 
                   padding: '12px', 
-                  borderRadius: '12px', 
-                  background: idx === 0 ? 'linear-gradient(90deg, rgba(234, 179, 8, 0.1), transparent)' : 'rgba(255,255,255,0.02)',
-                  border: idx === 0 ? '1px solid rgba(234, 179, 8, 0.2)' : '1px solid transparent'
-                }}>
+                  borderRadius: '16px', 
+                  background: idx === 0 ? 'rgba(234, 179, 8, 0.05)' : 'rgba(255,255,255,0.01)',
+                  border: idx === 0 ? '1px solid rgba(234, 179, 8, 0.2)' : '1px solid rgba(255,255,255,0.03)',
+                  transition: 'all 0.2s ease'
+                }} className="group hover:bg-white/[0.04]">
                   <div style={{ 
                     width: '32px', height: '32px', 
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: idx < 3 ? '20px' : '14px',
-                    fontWeight: 700,
-                    color: idx === 0 ? '#eab308' : idx === 1 ? '#94a3b8' : idx === 2 ? '#b45309' : 'var(--text-muted)'
+                    fontSize: idx < 3 ? '18px' : '12px',
+                    fontWeight: 900,
+                    color: idx === 0 ? '#eab308' : idx === 1 ? '#94a3b8' : idx === 2 ? '#b45309' : 'rgba(255,255,255,0.2)'
                   }}>
                     {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>{user.name}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{user.designation}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: 'white' }}>{user.name}</div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{user.designation}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--accent-blue)' }}>{user.points}</div>
-                    <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)' }}>Points</div>
+                    <div style={{ fontSize: '15px', fontWeight: 900, color: idx === 0 ? '#fbbf24' : 'var(--accent-blue)' }}>{user.points.toLocaleString()}</div>
+                    <div style={{ fontSize: '8px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.2)' }}>Points</div>
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          <div style={{ marginTop: '24px', padding: '16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', margin: 0 }}>
-              Complete tasks and inspections to earn points and climb the leaderboard!
+          <div style={{ marginTop: '24px', padding: '16px', borderRadius: '16px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center', margin: 0, lineHeight: '1.5' }}>
+              Upload tasks and verify inspections to climb the leaderboard!
             </p>
           </div>
         </div>
