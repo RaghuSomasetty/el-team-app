@@ -21,6 +21,7 @@ const navItems = [
   { section: 'Database', items: [
     { href: '/dashboard/motors', icon: '⚙️', label: 'Motor Database' },
     { href: '/dashboard/inspections', icon: '⚡', label: 'Motor Inspection' },
+    { href: '/dashboard/battery-inspection', icon: '🔋', label: 'Battery Inspection' },
     { href: '/dashboard/equipment', icon: '🔌', label: 'Equipment' },
     { href: '/dashboard/spare-parts', icon: '🔧', label: 'Spare Parts' },
   ]},

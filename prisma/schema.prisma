@@ -29,6 +29,52 @@ model User {
   pushSubscriptions    PushSubscription[]
   reportedUsages       SparePartUsage[] @relation("ReportedUsage")
   approvedUsages       SparePartUsage[] @relation("ApprovedUsage")
+  batteryInspections   BatteryInspection[]
+}
+
+// ... existing models ...
+
+model BatteryInspection {
+  id                    String            @id @default(cuid())
+  date                  DateTime          @default(now())
+  inspectorName         String
+  inspectorId           String?
+  inspector             User?             @relation(fields: [inspectorId], references: [id])
+  
+  // Aggregate stats for 110V Bank
+  totalVoltage_110V     Float?
+  averageVoltage_110V   Float?
+  minVoltage_110V       Float?
+  maxVoltage_110V       Float?
+  
+  // Overall status counts
+  totalBatteries        Int               @default(0)
+  healthyCount          Int               @default(0)
+  warningCount          Int               @default(0)
+  criticalCount         Int               @default(0)
+
+  // AI & Observations
+  aiAnalysis            String?
+  observations          String?
+  recommendations       String?
+  imageUrls             String            @default("[]") // JSON array of image URLs
+  
+  readings              BatteryReading[]
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+}
+
+model BatteryReading {
+  id                    String            @id @default(cuid())
+  inspectionId          String
+  inspection            BatteryInspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  section               String            // "110V_DC", "UPS", "MODULE_1_OLD", etc.
+  batteryNumber         Int
+  voltage               Float?
+  specificGravity       Float?
+  status                String            @default("NORMAL") // "NORMAL", "WARNING", "CRITICAL"
+  isDeviationFlagged    Boolean           @default(false)
 }
 
 model Equipment {

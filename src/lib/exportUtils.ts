@@ -391,3 +391,84 @@ export const exportGenericTableToWord = async (title: string, headers: string[],
   const blob = await Packer.toBlob(doc)
   saveAs(blob, filename.endsWith('.docx') ? filename : `${filename}.docx`)
 }
+
+export const exportBatteryInspectionToPDF = (inspection: any, readings: any[]) => {
+  const doc = new jsPDF()
+  
+  // Header
+  doc.setFontSize(22)
+  doc.setTextColor(59, 130, 246)
+  doc.text('Battery System Inspection Report', 14, 22)
+  
+  doc.setFontSize(10)
+  doc.setTextColor(100)
+  doc.text(`Generated on: ${new Date(inspection.date).toLocaleString('en-IN')}`, 14, 30)
+  doc.text(`Inspector: ${inspection.inspectorName}`, 14, 35)
+
+  // Summary Table
+  autoTable(doc, {
+    startY: 45,
+    head: [['Health Summary', 'Value']],
+    body: [
+      ['Total Batteries', inspection.totalBatteries],
+      ['Healthy (Green)', inspection.healthyCount],
+      ['Warning (Orange)', inspection.warningCount],
+      ['Critical (Red)', inspection.criticalCount],
+      ['110V Bank Total Voltage', `${inspection.totalVoltage_110V || '—'} V`],
+      ['110V Bank Avg Voltage', `${inspection.averageVoltage_110V || '—'} V`],
+    ],
+    theme: 'striped',
+    headStyles: { fillColor: [59, 130, 246] }
+  })
+
+  // Readings Table
+  const finalY = (doc as any).lastAutoTable.finalY || 45
+  doc.setTextColor(0)
+  doc.setFontSize(14)
+  doc.text('Detailed Readings', 14, finalY + 15)
+  
+  autoTable(doc, {
+    startY: finalY + 20,
+    head: [['Section', 'No', 'Voltage (V)', 'Gravity', 'Status']],
+    body: readings.map((r: any) => [
+      r.section.replace(/_/g, ' '),
+      r.batteryNumber,
+      r.voltage || '—',
+      r.specificGravity || '—',
+      r.status
+    ]),
+    theme: 'grid',
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [59, 130, 246] },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 4) {
+        if (data.cell.raw === 'CRITICAL') data.cell.styles.textColor = [239, 68, 68];
+        if (data.cell.raw === 'WARNING') data.cell.styles.textColor = [245, 158, 11];
+        if (data.cell.raw === 'NORMAL') data.cell.styles.textColor = [16, 185, 129];
+      }
+    }
+  })
+
+  // Observations
+  if (inspection.observations || inspection.aiAnalysis) {
+    const tableFinalY = (doc as any).lastAutoTable.finalY
+    doc.addPage()
+    doc.setFontSize(16)
+    doc.text('Observations & AI Analysis', 14, 20)
+    
+    doc.setFontSize(11)
+    doc.text('Observations:', 14, 30)
+    const splitObs = doc.splitTextToSize(inspection.observations || 'None', 180)
+    doc.text(splitObs, 14, 35)
+    
+    if (inspection.aiAnalysis) {
+      const yPos = 35 + (splitObs.length * 6) + 10
+      doc.text('VoltMind AI Recommendations:', 14, yPos)
+      const splitAI = doc.splitTextToSize(inspection.aiAnalysis, 180)
+      doc.text(splitAI, 14, yPos + 5)
+    }
+  }
+
+  const blob = doc.output('blob')
+  saveAs(blob, `Battery_Inspection_${new Date(inspection.date).toISOString().split('T')[0]}.pdf`)
+}
