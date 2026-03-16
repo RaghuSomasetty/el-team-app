@@ -80,7 +80,7 @@ export default function WeeklyWinnerBanner() {
   if (loading || !champion) return null
 
   return (
-    <div className="mb-10 antialiased" style={{ border: '2px solid red' }}>
+    <div className="mb-10 antialiased">
       <Link href="/dashboard/leaderboard" className="block focus:outline-none">
         <motion.div 
           initial={{ opacity: 0, scale: 0.99 }}
@@ -88,80 +88,83 @@ export default function WeeklyWinnerBanner() {
           transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
           className="group relative"
         >
-          {/* Main Card - Prestige Theme */}
-          <div className="relative overflow-hidden rounded-[20px] bg-[#0c111d] border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500 group-hover:border-amber-500/20">
+          {/* Main Card - High Contrast Deep Theme */}
+          <div className="relative overflow-hidden rounded-[24px] bg-[#0c111d] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] transition-all duration-500 hover:border-amber-500/40">
             
-            {/* Professional Metallic Accents */}
-            <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-amber-500/[0.03] to-transparent"></div>
-            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+            {/* Glossy Overlay for Depth */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-amber-500/[0.05] to-transparent"></div>
 
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-6 sm:px-10 sm:py-8 gap-8">
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-7 sm:px-12 sm:py-10 gap-8">
               
-              <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                {/* Prestige Badge */}
+              <div className="flex flex-col md:flex-row items-center gap-10 text-center md:text-left">
+                {/* Prestige Badge - High Visibility */}
                 <div className="relative">
-                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border border-white/10 shadow-2xl relative z-10">
+                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-b from-[#1e293b] to-[#020617] border-2 border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] relative z-10">
                     <div className="flex flex-col items-center">
-                      <span className="text-4xl leading-none mb-1">👑</span>
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/80">Elite</span>
+                      <span className="text-5xl leading-none mb-1 drop-shadow-lg">👑</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 drop-shadow-md">TOP RATED</span>
                     </div>
                   </div>
-                  {/* Subtle Achievement Ring */}
-                  <div className="absolute inset-0 -m-1 rounded-full border border-amber-500/20 group-hover:border-amber-500/40 transition-colors duration-700"></div>
-                  <div className="absolute inset-0 -m-3 rounded-full border border-amber-500/5 animate-pulse"></div>
+                  {/* Glowing Rings */}
+                  <div className="absolute inset-0 -m-1.5 rounded-full border border-amber-500/30 group-hover:border-amber-500/60 transition-colors duration-700"></div>
+                  <div className="absolute inset-0 -m-4 rounded-full border border-amber-500/5 animate-pulse"></div>
                 </div>
 
-                {/* Champion Info */}
-                <div>
-                  <div className="inline-flex items-center gap-2 mb-3 bg-white/[0.03] border border-white/5 px-3 py-1 rounded-md">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                      Weekly Performance Recognition
+                {/* Champion Info - Strong Typography */}
+                <div className="flex flex-col gap-2">
+                  <div className="inline-flex items-center self-center md:self-start gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
+                    <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></div>
+                    <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-amber-200">
+                      WEEKLY EXCELLENCE AWARD
                     </span>
                   </div>
                   
-                  <h2 className="mb-2 text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl">
-                    <span className="font-black">{champion.name.split(' ')[0]}</span>{' '}
-                    <span className="text-slate-400">{champion.name.split(' ').slice(1).join(' ')}</span>
+                  <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight drop-shadow-sm">
+                    {champion.name}
                   </h2>
                   
-                  <div className="flex items-center justify-center md:justify-start gap-6">
+                  <div className="flex items-center justify-center md:justify-start gap-8 mt-1">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Role</span>
-                      <span className="text-sm font-semibold text-white/80">{champion.designation}</span>
+                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Designation</span>
+                      <span className="text-lg font-bold text-white tracking-wide">{champion.designation}</span>
                     </div>
-                    <div className="h-8 w-px bg-white/5"></div>
+                    <div className="h-10 w-px bg-white/10"></div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Points</span>
-                      <span className="text-sm font-black text-amber-500 italic">{champion.points.toLocaleString()} pts</span>
+                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Weekly Activity</span>
+                      <span className="text-lg font-black text-amber-400 flex items-center gap-1.5">
+                        <span className="text-2xl">{champion.points.toLocaleString()}</span>
+                        <span className="text-xs text-amber-400/70 font-bold uppercase tracking-tighter pt-1">Points</span>
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Status Badge & CTA */}
-              <div className="flex flex-col items-center md:items-end gap-6 flex-shrink-0">
-                <div className="text-right hidden md:block">
+              <div className="flex flex-col items-center md:items-end gap-8 flex-shrink-0">
+                <div className="text-right hidden md:block border-l-2 border-emerald-500/30 pl-4">
                   <div className="flex items-center gap-2 mb-1 justify-end">
-                    <span className="h-1 w-1 rounded-full bg-emerald-500"></span>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Excellence Status</span>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#4ade80]"></span>
+                    <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Verified Performance</span>
                   </div>
-                  <p className="text-xs font-medium text-amber-100/50">"Demonstrated Technical Leadership"</p>
+                  <p className="text-xs font-semibold text-slate-400">Leading the field this week</p>
                 </div>
                 
                 <motion.div 
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="group/btn relative px-8 py-3 rounded-xl bg-white text-[#0c111d] text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:bg-slate-200 shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
+                  whileHover={{ y: -3, backgroundColor: '#f8fafc' }}
+                  whileTap={{ scale: 0.97 }}
+                  className="group/btn relative px-10 py-4 rounded-2xl bg-white text-[#0f172a] text-[12px] font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_rgba(255,255,255,0.05)] transition-all"
                 >
-                  View Standings
-                  <div className="absolute inset-0 rounded-xl border border-white/50 group-hover/btn:scale-105 opacity-0 group-hover/btn:opacity-100 transition-all duration-300"></div>
+                  Hall of Fame
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-amber-500 rounded-b-2xl opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
                 </motion.div>
               </div>
 
             </div>
 
             {/* Subtle Texture Overlay */}
-            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mt-[-100px]"></div>
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mt-[-100px]"></div>
           </div>
         </motion.div>
       </Link>
