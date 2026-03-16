@@ -5,14 +5,15 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
+    const { id } = await params
     const inspection = await prisma.batteryInspection.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { readings: { orderBy: { batteryNumber: 'asc' } } }
     })
     
