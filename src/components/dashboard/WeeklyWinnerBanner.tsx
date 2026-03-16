@@ -89,11 +89,11 @@ export default function WeeklyWinnerBanner() {
           className="group relative"
         >
           {/* Main Card - High Contrast Deep Theme */}
-          <div className="relative overflow-hidden rounded-[24px] bg-[#0c111d] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] transition-all duration-500 hover:border-amber-500/40">
+          <div className="relative overflow-hidden rounded-[24px] bg-[#0c111d] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] transition-all duration-500 hover:border-blue-500/40">
             
             {/* Glossy Overlay for Depth */}
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-amber-500/[0.05] to-transparent"></div>
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/[0.05] to-transparent"></div>
 
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-7 sm:px-12 sm:py-10 gap-8">
               
@@ -103,19 +103,19 @@ export default function WeeklyWinnerBanner() {
                   <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-b from-[#1e293b] to-[#020617] border-2 border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] relative z-10">
                     <div className="flex flex-col items-center">
                       <span className="text-5xl leading-none mb-1 drop-shadow-lg">👑</span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 drop-shadow-md">TOP RATED</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 drop-shadow-md">TOP RATED</span>
                     </div>
                   </div>
                   {/* Glowing Rings */}
-                  <div className="absolute inset-0 -m-1.5 rounded-full border border-amber-500/30 group-hover:border-amber-500/60 transition-colors duration-700"></div>
-                  <div className="absolute inset-0 -m-4 rounded-full border border-amber-500/5 animate-pulse"></div>
+                  <div className="absolute inset-0 -m-1.5 rounded-full border border-blue-500/30 group-hover:border-blue-500/60 transition-colors duration-700"></div>
+                  <div className="absolute inset-0 -m-4 rounded-full border border-blue-500/5 animate-pulse"></div>
                 </div>
 
                 {/* Champion Info - Strong Typography */}
                 <div className="flex flex-col gap-2">
                   <div className="inline-flex items-center self-center md:self-start gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
-                    <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse"></div>
-                    <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-amber-200">
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                    <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-blue-200">
                       WEEKLY EXCELLENCE AWARD
                     </span>
                   </div>
@@ -132,9 +132,9 @@ export default function WeeklyWinnerBanner() {
                     <div className="h-10 w-px bg-white/10"></div>
                     <div className="flex flex-col">
                       <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Weekly Activity</span>
-                      <span className="text-lg font-black text-amber-400 flex items-center gap-1.5">
+                      <span className="text-lg font-black text-blue-400 flex items-center gap-1.5">
                         <span className="text-2xl">{champion.points.toLocaleString()}</span>
-                        <span className="text-xs text-amber-400/70 font-bold uppercase tracking-tighter pt-1">Points</span>
+                        <span className="text-xs text-blue-300 font-bold uppercase tracking-tighter pt-1">Points</span>
                       </span>
                     </div>
                   </div>
@@ -157,7 +157,7 @@ export default function WeeklyWinnerBanner() {
                   className="group/btn relative px-10 py-4 rounded-2xl bg-white text-[#0f172a] text-[12px] font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_rgba(255,255,255,0.05)] transition-all"
                 >
                   Hall of Fame
-                  <div className="absolute inset-x-0 bottom-0 h-1 bg-amber-500 rounded-b-2xl opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 rounded-b-2xl opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
                 </motion.div>
               </div>
 
