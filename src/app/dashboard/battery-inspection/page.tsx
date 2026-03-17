@@ -1,176 +1,121 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import FadeIn from '@/components/animations/FadeIn'
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend
-} from 'recharts'
-import { exportBatteryInspectionToPDF } from '@/lib/exportUtils'
+import { motion } from 'framer-motion'
 
-export default function BatteryDashboardPage() {
-  const router = useRouter()
+export default function BatteryInspectionDashboard() {
   const [inspections, setInspections] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
-    total: 0,
-    healthy: 0,
-    warning: 0,
-    critical: 0
-  })
 
   useEffect(() => {
-    fetchInspections()
+    fetch('/api/battery-inspections')
+      .then(res => res.json())
+      .then(data => {
+        setInspections(Array.isArray(data) ? data : [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
-  const fetchInspections = async () => {
-    try {
-      const res = await fetch('/api/battery-inspections')
-      if (res.ok) {
-        const data = await res.json()
-        setInspections(data)
-        if (data.length > 0) {
-          const latest = data[0]
-          setStats({
-            total: latest.totalBatteries,
-            healthy: latest.healthyCount,
-            warning: latest.warningCount,
-            critical: latest.criticalCount
-          })
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch inspections:', err)
-    } finally {
-      setLoading(false)
-    }
+  const latest = inspections[0]
+  const stats = {
+    total: latest?.totalBatteries || 0,
+    healthy: latest?.healthyCount || 0,
+    warning: latest?.warningCount || 0,
+    critical: latest?.criticalCount || 0
   }
-
-  const handleDownloadReport = async (inspection: any) => {
-    try {
-      const res = await fetch(`/api/battery-inspections/${inspection.id}`)
-      if (res.ok) {
-        const detail = await res.json()
-        exportBatteryInspectionToPDF(detail, detail.readings)
-      }
-    } catch (err) {
-      alert('Failed to generate report')
-    }
-  }
-
-  const healthData = [
-    { name: 'Healthy', value: stats.healthy, fill: '#10b981' },
-    { name: 'Warning', value: stats.warning, fill: '#f59e0b' },
-    { name: 'Critical', value: stats.critical, fill: '#ef4444' },
-  ]
 
   return (
-    <DashboardLayout title="Battery System Inspection" subtitle="Plant-wide DC & UPS battery health monitoring">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        <button className="btn btn-primary" onClick={() => router.push('/dashboard/battery-inspection/new')}>
-          ➕ Start New Inspection
-        </button>
+    <DashboardLayout title="Battery Health Dashboard" subtitle="Monitoring plant DC power systems">
+      <div className="flex justify-end mb-6">
+        <Link href="/dashboard/battery-inspection/new">
+          <button className="btn btn-primary shadow-lg shadow-blue-500/20">
+            ➕ New Inspection
+          </button>
+        </Link>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '50px' }}><span className="spinner" /></div>
-      ) : inspections.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '60px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔋</div>
-          <h3>No Inspections Yet</h3>
-          <p style={{ color: 'var(--text-muted)' }}>Digitize your first battery bank inspection today.</p>
-          <button className="btn btn-primary" style={{ marginTop: '20px' }} onClick={() => router.push('/dashboard/battery-inspection/new')}>
-            Create First Inspection
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="grid-2" style={{ marginBottom: '24px' }}>
-            <FadeIn direction="left">
-              <div className="card glass-panel" style={{ background: 'var(--bg-card)', padding: '24px' }}>
-                <div style={{ fontWeight: 700, marginBottom: '20px', fontSize: '16px' }}>📊 Latest Health Status</div>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                  <div style={{ flex: 1, height: '180px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={healthData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-                        <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
-                        <Tooltip contentStyle={{ background: '#0f172a', border: 'none', borderRadius: '8px' }} />
-                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                          {healthData.map((entry, index) => <Cell key={index} fill={entry.fill} />)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div style={{ minWidth: '120px' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: 'white' }}>{stats.total}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Cells</div>
-                  </div>
-                </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {[
+          { label: 'Total Batteries', value: stats.total, color: 'var(--accent-blue)', icon: '🔋' },
+          { label: 'Healthy', value: stats.healthy, color: '#10b981', icon: '✅' },
+          { label: 'Warning', value: stats.warning, color: '#f59e0b', icon: '⚠️' },
+          { label: 'Critical', value: stats.critical, color: '#ef4444', icon: '🚨' }
+        ].map((s, i) => (
+          <FadeIn key={i} delay={i * 0.1}>
+            <div className="card text-center relative overflow-hidden group">
+              <div 
+                className="absolute top-0 right-0 w-16 h-16 opacity-5 flex items-center justify-center text-4xl transform translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform"
+                style={{ color: s.color }}
+              >
+                {s.icon}
               </div>
-            </FadeIn>
-
-            <FadeIn direction="right">
-              <div className="card glass-panel" style={{ background: 'var(--bg-card)', padding: '24px' }}>
-                <div style={{ fontWeight: 700, marginBottom: '20px', fontSize: '16px' }}>🔋 110V Bank Stats</div>
-                <div className="grid-2" style={{ gap: '16px' }}>
-                  {[
-                    { label: 'Total Voltage', value: `${inspections[0].totalVoltage_110V || '—'} V`, color: 'var(--accent-blue)' },
-                    { label: 'Avg Cell Voltage', value: `${inspections[0].averageVoltage_110V || '—'} V`, color: '#10b981' },
-                    { label: 'Min Cell', value: `${inspections[0].minVoltage_110V || '—'} V`, color: '#ef4444' },
-                    { label: 'Max Cell', value: `${inspections[0].maxVoltage_110V || '—'} V`, color: '#eab308' },
-                  ].map(stat => (
-                    <div key={stat.label} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{stat.label}</div>
-                      <div style={{ fontSize: '18px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-                    </div>
-                  ))}
-                </div>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {s.label}
               </div>
-            </FadeIn>
-          </div>
-
-          <FadeIn delay={0.2}>
-            <div className="card">
-              <div style={{ fontWeight: 700, marginBottom: '16px', fontSize: '16px' }}>🕒 Inspection History</div>
-              <div style={{ overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Inspector</th>
-                      <th>Total Cells</th>
-                      <th>Healthy</th>
-                      <th>Warning</th>
-                      <th>Critical</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inspections.map(ins => (
-                      <tr key={ins.id}>
-                        <td style={{ fontWeight: 600 }}>{new Date(ins.date).toLocaleDateString('en-IN')}</td>
-                        <td>{ins.inspectorName}</td>
-                        <td style={{ textAlign: 'center' }}>{ins.totalBatteries}</td>
-                        <td style={{ textAlign: 'center', color: '#10b981', fontWeight: 700 }}>{ins.healthyCount}</td>
-                        <td style={{ textAlign: 'center', color: '#f59e0b', fontWeight: 700 }}>{ins.warningCount}</td>
-                        <td style={{ textAlign: 'center', color: '#ef4444', fontWeight: 700 }}>{ins.criticalCount}</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="btn btn-secondary btn-sm" onClick={() => handleDownloadReport(ins)}>📄 PDF</button>
-                            <button className="btn btn-secondary btn-sm" onClick={() => router.push(`/dashboard/battery-inspection/${ins.id}`)}>👁️ View</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div style={{ fontSize: '28px', fontWeight: 800, color: s.color }}>
+                {s.value}
               </div>
             </div>
           </FadeIn>
-        </>
-      )}
+        ))}
+      </div>
+
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 700 }}>Inspection History</h3>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Last 50 records</span>
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div className="spinner"></div>
+            <p style={{ marginTop: '12px', color: 'var(--text-muted)' }}>Loading records...</p>
+          </div>
+        ) : inspections.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', border: '1px dashed var(--border-color)', borderRadius: '12px' }}>
+            <p style={{ color: 'var(--text-muted)' }}>No inspections found. Start by adding one!</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
+                  <th style={{ padding: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>DATE</th>
+                  <th style={{ padding: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>INSPECTOR</th>
+                  <th style={{ padding: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>HEALTH</th>
+                  <th style={{ padding: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inspections.map((ins, i) => (
+                  <tr key={ins.id} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s' }} className="hover:bg-white/[0.02]">
+                    <td style={{ padding: '16px 12px' }}>
+                      <div style={{ fontWeight: 600 }}>{new Date(ins.date).toLocaleDateString()}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(ins.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </td>
+                    <td style={{ padding: '16px 12px', fontSize: '14px' }}>{ins.inspectorName}</td>
+                    <td style={{ padding: '16px 12px' }}>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '11px', background: '#ef444420', color: '#ef4444' }}>{ins.criticalCount}C</span>
+                        <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '11px', background: '#f59e0b20', color: '#f59e0b' }}>{ins.warningCount}W</span>
+                        <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '11px', background: '#10b98120', color: '#10b981' }}>{ins.healthyCount}H</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px 12px' }}>
+                      <Link href={`/dashboard/battery-inspection/${ins.id}`}>
+                        <button className="btn btn-sm btn-outline" style={{ fontSize: '11px' }}>View Report</button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   )
 }

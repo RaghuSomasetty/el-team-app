@@ -46,12 +46,17 @@ export async function broadcastNotification(title: string, body: string, url: st
     data: { url }
   }
 
+  console.log(`Broadcasting to ${subscriptions.length} devices...`)
+
   const results = await Promise.allSettled(
     subscriptions.map((sub: any) => sendPushNotification(sub, payload))
   )
 
+  const sent = results.filter(r => r.status === 'fulfilled' && (r as any).value?.success).length
+  console.log(`Broadcast finished. Sent: ${sent}/${subscriptions.length}`)
+
   return {
     total: subscriptions.length,
-    sent: results.filter(r => r.status === 'fulfilled').length,
+    sent,
   }
 }

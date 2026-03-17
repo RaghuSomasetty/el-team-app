@@ -13,13 +13,13 @@ type Reading = {
 }
 
 const SECTIONS = [
-  { id: '110V_DC', name: 'SECTION 1: 110V DC BATTERY BANK', cells: 58, hasGravity: false },
-  { id: 'UPS', name: 'SECTION 2: UPS SYSTEM BATTERY', cells: 30, hasGravity: false }, 
-  { id: 'MODULE_1_OLD', name: 'SECTION 3: MODULE-1 24V OLD BATTERY', cells: 12, hasGravity: true },
-  { id: 'MODULE_2_OLD', name: 'SECTION 4: MODULE-2 24V OLD BATTERY', cells: 12, hasGravity: true },
-  { id: 'MODULE_1_NEW', name: 'SECTION 5: MODULE-1 24V NEW BATTERY', cells: 12, hasGravity: false },
-  { id: 'MODULE_2_NEW', name: 'SECTION 6: MODULE-2 24V NEW BATTERY', cells: 12, hasGravity: false },
-  { id: 'DG_SYSTEM', name: 'SECTION 7: DG SYSTEM BATTERY', cells: 2, hasGravity: false },
+  { id: '110V_DC', name: 'SECTION 1: 110V DC BATTERY BANK', cells: 58, hasGravity: false, nominalVoltage: 110 },
+  { id: 'UPS', name: 'SECTION 2: UPS SYSTEM BATTERY', cells: 18, hasGravity: false, nominalVoltage: 220 }, // 220V UPS system
+  { id: 'MODULE_1_OLD', name: 'SECTION 3: MODULE-1 24V OLD BATTERY', cells: 20, hasGravity: true, nominalVoltage: 24 },
+  { id: 'MODULE_2_OLD', name: 'SECTION 4: MODULE-2 24V OLD BATTERY', cells: 20, hasGravity: true, nominalVoltage: 24 },
+  { id: 'MODULE_1_NEW', name: 'SECTION 5: MODULE-1 24V NEW BATTERY', cells: 14, hasGravity: false, nominalVoltage: 24 },
+  { id: 'MODULE_2_NEW', name: 'SECTION 6: MODULE-2 24V NEW BATTERY', cells: 14, hasGravity: false, nominalVoltage: 24 },
+  { id: 'DG_SYSTEM', name: 'SECTION 7: DG SYSTEM BATTERY', cells: 2, hasGravity: false, nominalVoltage: 24 }, // Assuming 24V DG
 ]
 
 export default function NewBatteryInspectionPage() {
@@ -51,16 +51,23 @@ export default function NewBatteryInspectionPage() {
     ))
   }
 
-  const stats110V = useMemo(() => {
-    const v110 = readings.filter(r => r.section === '110V_DC' && r.voltage !== '').map(r => parseFloat(r.voltage))
-    if (v110.length === 0) return { total: '0.0', avg: '0.00', min: '0.00', max: '0.00' }
-    const total = v110.reduce((a, b) => a + b, 0)
-    return {
-      total: total.toFixed(1),
-      avg: (total / v110.length).toFixed(2),
-      min: Math.min(...v110).toFixed(2),
-      max: Math.max(...v110).toFixed(2)
-    }
+  const sectionStats = useMemo(() => {
+    const stats: Record<string, { total: string, avg: string, min: string, max: string }> = {}
+    SECTIONS.forEach(sec => {
+      const vSec = readings.filter(r => r.section === sec.id && r.voltage !== '').map(r => parseFloat(r.voltage))
+      if (vSec.length === 0) {
+        stats[sec.id] = { total: '0.0', avg: '0.00', min: '0.00', max: '0.00' }
+      } else {
+        const total = vSec.reduce((a, b) => a + b, 0)
+        stats[sec.id] = {
+          total: total.toFixed(1),
+          avg: (total / vSec.length).toFixed(2),
+          min: Math.min(...vSec).toFixed(2),
+          max: Math.max(...vSec).toFixed(2)
+        }
+      }
+    })
+    return stats
   }, [readings])
 
   const healthStats = useMemo(() => {
@@ -71,6 +78,12 @@ export default function NewBatteryInspectionPage() {
       if (v < 2.05) critical++
       else if (v <= 2.14) warning++
       else if (v >= 2.15 && v <= 2.30) healthy++
+      else {
+        // Anything outside specified ranges? User only specified up to 2.30 as normal.
+        // Let's assume > 2.30 is also healthy/normal unless specified otherwise,
+        // but for now stick to the ranges.
+        healthy++
+      }
       
       if (r.specificGravity && r.specificGravity !== '') {
         if (parseFloat(r.specificGravity) < 1.18) critical++
@@ -83,9 +96,38 @@ export default function NewBatteryInspectionPage() {
     if (vStr === '') return 'normal'
     const v = parseFloat(vStr)
     if (v < 2.05) return 'critical'
-    if (v <= 2.14) return 'warning'
+    if (v >= 2.05 && v <= 2.14) return 'warning'
     if (v >= 2.15 && v <= 2.30) return 'healthy'
     return 'normal'
+  }
+
+  const [images, setImages] = useState<string[]>([])
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const MAX_SIZE = 800
+          let width = img.width
+          let height = img.height
+          if (width > height) {
+            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE }
+          } else {
+            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE }
+          }
+          canvas.width = width
+          canvas.height = height
+          canvas.getContext('2d')?.drawImage(img, 0, 0, width, height)
+          setImages(prev => [...prev.slice(-3), canvas.toDataURL('image/jpeg', 0.7)]) // Keep last 4 images
+        }
+        img.src = reader.result as string
+      }
+      reader.readAsDataURL(file)
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,12 +141,13 @@ export default function NewBatteryInspectionPage() {
         let status = 'NORMAL'
         if (v < 2.05) status = 'CRITICAL'
         else if (v <= 2.14) status = 'WARNING'
+        else if (v >= 2.15 && v <= 2.30) status = 'NORMAL'
         
         if (r.specificGravity && parseFloat(r.specificGravity) < 1.18) status = 'CRITICAL'
         
         let isDeviationFlagged = false
         if (r.section === '110V_DC') {
-          const avg = parseFloat(stats110V.avg)
+          const avg = parseFloat(sectionStats[r.section].avg)
           if (Math.abs(v - avg) > 0.15) isDeviationFlagged = true
         }
 
@@ -117,16 +160,16 @@ export default function NewBatteryInspectionPage() {
         body: JSON.stringify({
           inspectorName,
           observations,
-          totalVoltage_110V: parseFloat(String(stats110V.total)),
-          averageVoltage_110V: parseFloat(String(stats110V.avg)),
-          minVoltage_110V: parseFloat(String(stats110V.min)),
-          maxVoltage_110V: parseFloat(String(stats110V.max)),
+          totalVoltage_110V: parseFloat(String(sectionStats['110V_DC'].total)),
+          averageVoltage_110V: parseFloat(String(sectionStats['110V_DC'].avg)),
+          minVoltage_110V: parseFloat(String(sectionStats['110V_DC'].min)),
+          maxVoltage_110V: parseFloat(String(sectionStats['110V_DC'].max)),
           totalBatteries: healthStats.total,
           healthyCount: healthStats.healthy,
           warningCount: healthStats.warning,
           criticalCount: healthStats.critical,
           readings: processedReadings,
-          imageUrls: []
+          imageUrls: images
         })
       })
 
@@ -165,11 +208,12 @@ export default function NewBatteryInspectionPage() {
           marginBottom: '24px', display: 'flex', gap: '24px', flexWrap: 'wrap',
           alignItems: 'center', justifyContent: 'space-between'
         }}>
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: '13px' }}>110V Total: <span style={{ fontWeight: 700, color: 'var(--accent-blue)' }}>{stats110V.total}V</span></div>
-            <div style={{ fontSize: '13px' }}>110V Avg: <span style={{ fontWeight: 700, color: '#10b981' }}>{stats110V.avg}V</span></div>
-            <div style={{ fontSize: '13px' }}>Warnings: <span style={{ fontWeight: 700, color: '#f59e0b' }}>{healthStats.warning}</span></div>
-            <div style={{ fontSize: '13px' }}>Critical: <span style={{ fontWeight: 700, color: '#ef4444' }}>{healthStats.critical}</span></div>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', overflowX: 'auto', maxWidth: '80%' }}>
+            {SECTIONS.map(sec => (
+              <div key={sec.id} style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
+                {sec.id.replace(/_/g, ' ')}: <span style={{ fontWeight: 700, color: parseFloat(sectionStats[sec.id].total) < (sec.nominalVoltage - 2) ? '#ef4444' : 'var(--accent-blue)' }}>{sectionStats[sec.id].total}V</span>
+              </div>
+            ))}
           </div>
           <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
             {saving ? '⏳ Saving...' : '✅ Save Inspection'}
@@ -179,8 +223,9 @@ export default function NewBatteryInspectionPage() {
         {SECTIONS.map(section => (
           <FadeIn key={section.id}>
             <div className="card" style={{ marginBottom: '32px' }}>
-              <div style={{ fontWeight: 700, marginBottom: '16px', color: 'var(--accent-blue)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                {section.name}
+              <div style={{ fontWeight: 700, marginBottom: '16px', color: 'var(--accent-blue)', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <span>{section.name}</span>
+                <span style={{ fontSize: '14px' }}>Total: {sectionStats[section.id].total}V (Nominal: {section.nominalVoltage}V)</span>
               </div>
               <div style={{ 
                 display: 'grid', 
@@ -222,11 +267,43 @@ export default function NewBatteryInspectionPage() {
           </FadeIn>
         ))}
 
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <label className="form-label" style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>📸 Inspection Photos</span>
+            <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>(Max 4 images)</span>
+          </label>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px' }}>
+            {images.map((img, i) => (
+              <div key={i} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--accent-blue)' }}>
+                <img src={img} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button 
+                  type="button" 
+                  onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                  style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '12px', cursor: 'pointer' }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            {images.length < 4 && (
+              <label style={{ 
+                width: '80px', height: '80px', borderRadius: '12px', border: '2px dashed var(--border-color)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.02)', fontSize: '24px'
+              }}>
+                ＋
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+              </label>
+            )}
+          </div>
+        </div>
+
         <div className="card" style={{ marginBottom: '40px' }}>
-          <label className="form-label">General Observations & Recommendations</label>
+          <label className="form-label" style={{ fontWeight: 700 }}>AI Observations & Recommendations</label>
           <textarea 
             className="form-input" rows={4} 
-            placeholder="e.g. Needs equalizing charge, check terminals on cell 17..."
+            style={{ borderRadius: '12px', padding: '12px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.01)' }}
+            placeholder="VoltMind AI will assist you once saved. Add initial observations here..."
             value={observations}
             onChange={e => setObservations(e.target.value)}
           />

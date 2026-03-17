@@ -174,17 +174,41 @@ export default function ChatPage() {
                     className={`wa-message-row ${isMine ? 'mine' : 'theirs'}`}
                   >
                     {!isMine && (
-                      <div className="wa-sender-name">
-                        {msg.sender?.name} <span className="wa-designation">{msg.sender?.designation}</span>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <div className="wa-avatar-small" style={{
+                           backgroundImage: msg.sender?.image 
+                             ? `url(${msg.sender.image})` 
+                             : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                           backgroundSize: 'cover',
+                           backgroundPosition: 'center',
+                           display: 'flex',
+                           alignItems: 'center',
+                           justifyContent: 'center'
+                        }}>
+                          {!msg.sender?.image && msg.sender?.name?.[0]}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div className="wa-sender-name">
+                            {msg.sender?.name} <span className="wa-designation">{msg.sender?.designation}</span>
+                          </div>
+                          <div className={`wa-bubble received`}>
+                            <div className="wa-content">{msg.content}</div>
+                            <div className="wa-time">
+                              {new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
-                    <div className={`wa-bubble ${isMine ? 'sent' : 'received'}`}>
-                      <div className="wa-content">{msg.content}</div>
-                      <div className="wa-time">
-                        {new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        {isMine && <span style={{ marginLeft: '4px' }}>✓✓</span>}
+                    {isMine && (
+                      <div className={`wa-bubble sent`}>
+                        <div className="wa-content">{msg.content}</div>
+                        <div className="wa-time">
+                          {new Date(msg.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          <span style={{ marginLeft: '4px' }}>✓✓</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </motion.div>
                 )
               })}
@@ -453,6 +477,18 @@ export default function ChatPage() {
           font-weight: 900;
           cursor: pointer;
         }
+        .wa-avatar-small {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          font-weight: 700;
+          font-size: 14px;
+          color: white;
+          border: 1px solid rgba(255,255,255,0.1);
+          margin-top: 4px;
+        }
+
       `}</style>
     </DashboardLayout>
   )

@@ -11,8 +11,10 @@ export async function POST(req: Request) {
   // Secure this with a secret key for CRON jobs
   const { searchParams } = new URL(req.url)
   const secret = searchParams.get('secret')
+  const expectedSecret = process.env.CRON_SECRET || 'el_team_reset_secret_2026'
   
-  if (secret !== process.env.CRON_SECRET) {
+  if (secret !== expectedSecret) {
+    console.warn(`Unauthorized notification attempt. Received: ${secret}, Expected: ${expectedSecret.substring(0, 4)}...`)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -65,7 +65,22 @@ export default function DashboardLayout({ title, subtitle, children, actions }: 
               id="topbar-search"
             />
             <span className={`role-badge ${user?.role}`}>{user?.role}</span>
-            <button className="avatar-btn" title={user?.name} id="avatar-btn">{initials}</button>
+            <button 
+              className="avatar-btn" 
+              title={user?.name} 
+              id="avatar-btn"
+              style={{
+                backgroundImage: user?.image ? `url(${user.image})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: user?.image ? '2px solid var(--accent-blue)' : 'none'
+              }}
+            >
+              {!user?.image && initials}
+            </button>
           </motion.div>
         </header>
         )}

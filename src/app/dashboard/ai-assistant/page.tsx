@@ -162,6 +162,13 @@ export default function AIAssistantPage() {
   const [attachments, setAttachments] = useState<{ type: 'image' | 'file', data: string, name: string, mimeType: string }[]>([])
   const messagesEnd = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [fullUser, setFullUser] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/user/profile').then(res => res.json()).then(data => {
+      if (data.user) setFullUser(data.user)
+    })
+  }, [])
 
   const handleVoiceFinish = useCallback((text: string) => {
     ask(text)
@@ -249,10 +256,15 @@ export default function AIAssistantPage() {
                    animate={{ opacity: 1, y: 0, scale: 1 }}
                 >
                   <div className="ai-avatar glass-panel" style={{ 
-                    background: msg.role === 'user' ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-                    fontSize: '16px', width: '36px', height: '36px'
+                    backgroundImage: msg.role === 'user' 
+                      ? (fullUser?.image ? `url(${fullUser.image})` : 'linear-gradient(135deg, #3b82f6, #2563eb)')
+                      : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    fontSize: '16px', width: '36px', height: '36px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}>
-                    {msg.role === 'user' ? '👤' : '🧠'}
+                    {msg.role === 'user' ? (!fullUser?.image && (fullUser?.name?.[0] || '👤')) : '💡'}
                   </div>
                   <div className={`ai-bubble-premium ${msg.role === 'user' ? 'user' : 'assistant'}`}>
                     <ChatContent msg={msg} />
@@ -262,7 +274,7 @@ export default function AIAssistantPage() {
             </AnimatePresence>
             {loading && (
               <div className="ai-message">
-                <div className="ai-avatar glass-panel" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', width: '36px', height: '36px' }}>🧠</div>
+                <div className="ai-avatar glass-panel" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', width: '36px', height: '36px' }}>💡</div>
                 <div className="ai-bubble-premium assistant" style={{ minWidth: '120px' }}>
                   <div style={{ display: 'flex', gap: '4px' }}>
                     <div className="ai-typing-dot" style={{ animationDelay: '0s' }} />

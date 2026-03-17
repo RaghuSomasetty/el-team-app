@@ -39,6 +39,8 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({ todayMIS: 0, motors: 0, activities: 0, pending: 0 })
   const [recentMIS, setRecentMIS] = useState<any[]>([])
   const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [batteryStats, setBatteryStats] = useState<any>(null)
+  const [inspections, setInspections] = useState<any[]>([])
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
@@ -59,9 +61,11 @@ export default function DashboardPage() {
     const cached = sessionStorage.getItem('el-dashboard-stats')
     if (cached) {
       try {
-        const { stats: s, mis } = JSON.parse(cached)
+        const { stats: s, mis, battery, inspections: insp } = JSON.parse(cached)
         setStats(s)
         setRecentMIS(mis)
+        setBatteryStats(battery)
+        if (insp) setInspections(insp)
       } catch {}
     }
     startTransition(() => { fetchData() })
@@ -70,15 +74,17 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
-      const [misRes, motorRes, actRes, pendingRes, leaderRes] = await Promise.all([
+      const [misRes, motorRes, actRes, pendingRes, leaderRes, batteryRes, inspRes] = await Promise.all([
         fetch(`/api/mis?date=${today}`),
         fetch('/api/motors'),
         fetch('/api/activities'),
         fetch('/api/mis?status=DRAFT'),
         fetch('/api/leaderboard?timeframe=weekly'),
+        fetch('/api/dashboard/battery-stats'),
+        fetch('/api/inspections?limit=100'),
       ])
-      const [mis, motors, activities, pending, leaders] = await Promise.all([
-        misRes.json(), motorRes.json(), actRes.json(), pendingRes.json(), leaderRes.json()
+      const [mis, motors, activities, pending, leaders, battery, insp] = await Promise.all([
+        misRes.json(), motorRes.json(), actRes.json(), pendingRes.json(), leaderRes.json(), batteryRes.json(), inspRes.json()
       ])
       const newStats = {
         todayMIS: Array.isArray(mis) ? mis.length : 0,
@@ -88,14 +94,20 @@ export default function DashboardPage() {
       }
       const newMIS = Array.isArray(mis) ? mis.slice(0, 5) : []
       const newLeaders = Array.isArray(leaders) ? leaders.slice(0, 5) : []
+      
       setStats(newStats)
       setRecentMIS(newMIS)
       setLeaderboard(newLeaders)
+      setBatteryStats(battery)
+      setInspections(Array.isArray(insp) ? insp : [])
+      
       // Cache for instant re-visit within same session
       sessionStorage.setItem('el-dashboard-stats', JSON.stringify({ 
         stats: newStats, 
         mis: newMIS,
-        leaders: newLeaders
+        leaders: newLeaders,
+        battery: battery,
+        inspections: Array.isArray(insp) ? insp : []
       }))
     } catch (e) {
       console.error(e)
@@ -123,6 +135,66 @@ export default function DashboardPage() {
           Live — {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </span>
       </div>
+      
+      {/* Critical Motor Alerts Section */}
+      {inspections.filter(i => i.abnormality?.includes('[AI ALERT:')).length > 0 && (
+        <FadeIn delay={0.2}>
+          <div style={{ 
+            background: 'rgba(239, 68, 68, 0.08)', 
+            border: '1px solid rgba(239, 68, 68, 0.2)', 
+            borderRadius: '24px', 
+            padding: '24px',
+            marginBottom: '24px',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{ 
+              position: 'absolute', 
+              top: '-20px', 
+              right: '-20px', 
+              fontSize: '80px', 
+              opacity: 0.05,
+              pointerEvents: 'none'
+            }}>🚨</div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>⚠️</span>
+                <span style={{ fontSize: '13px', fontWeight: 900, color: '#ef4444', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  Critical Motor Alerts
+                </span>
+              </div>
+              <button 
+                onClick={() => router.push('/dashboard/analytics')}
+                style={{ fontSize: '10px', fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', cursor: 'pointer', background: 'none', border: 'none', textDecoration: 'underline' }}
+              >
+                Go to Analytics →
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              {inspections.filter(i => i.abnormality?.includes('[AI ALERT:')).slice(0, 3).map((m, idx) => (
+                <div key={m.id} style={{ 
+                  background: 'rgba(0,0,0,0.3)', 
+                  padding: '16px', 
+                  borderRadius: '16px', 
+                  borderLeft: '4px solid #ef4444',
+                  cursor: 'pointer'
+                }} onClick={() => router.push(`/dashboard/motors/${m.motorTag}`)}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '13px', color: '#fff' }}>{m.motorTag}</span>
+                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{new Date(m.inspectedAt).toLocaleDateString()}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginBottom: '4px', fontWeight: 600 }}>{m.area}</div>
+                  <div style={{ fontSize: '12px', color: '#ef4444', fontWeight: 700 }}>
+                    {m.abnormality?.split(']')[0].replace('[AI ALERT: ', '')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </FadeIn>
+      )}
 
       {/* KPI Cards */}
       <div className="kpi-grid">
@@ -199,6 +271,76 @@ export default function DashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+
+          <div className="card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '24px' }}>
+            <div className="chart-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <span className="flex items-center gap-2 text-white/90">
+                <span className="text-xl">🔋</span>
+                <span className="font-black uppercase tracking-widest text-[11px]">Battery System Health</span>
+              </span>
+              {batteryStats?.hasData && (
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                  batteryStats.status === 'GOOD' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                  batteryStats.status === 'WARNING' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                  'bg-red-500/10 text-red-500 border border-red-500/20'
+                }`}>
+                  {batteryStats.status}
+                </span>
+              )}
+            </div>
+
+            {batteryStats?.hasData ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">110V Bank</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl font-black text-white">{batteryStats.v110 || '--'}</span>
+                      <span className="text-[10px] font-bold text-slate-600">V</span>
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">24V Bank</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl font-black text-white">{batteryStats.v24 || '--'}</span>
+                      <span className="text-[10px] font-bold text-slate-600">V</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-blue-500/[0.03] border border-blue-500/10">
+                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span className="text-xs">🤖</span> AI RECOMMENDATION
+                  </p>
+                  <p className="text-[11px] font-bold text-slate-300 leading-relaxed italic">
+                    "{batteryStats.recommendation || 'No anomalies detected in latest inspection.'}"
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                    Last Inspected: {new Date(batteryStats.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </span>
+                  <button 
+                    className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
+                    onClick={() => router.push(`/dashboard/battery-inspection/${batteryStats.inspectionId}`)}
+                  >
+                    View Report →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">No Inspection Data</p>
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={() => router.push('/dashboard/battery-inspection/new')}
+                >
+                  Start First Inspection
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="card">
@@ -337,7 +479,7 @@ export default function DashboardPage() {
                     alert(`❌ Failed: ${data.error}`);
                   }
                 } catch (err) {
-                  alert('❌ Error triggering notification');
+                  alert('❌ Error: Could not reach the notification server. Check your internet connection.');
                   console.error(err);
                 }
               }}

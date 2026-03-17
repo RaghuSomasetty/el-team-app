@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     where: { groupId },
     orderBy: { createdAt: 'asc' },
     take: 100,
-    include: { sender: { select: { name: true, designation: true } } },
+    include: { sender: { select: { name: true, designation: true, image: true } } },
   })
 
   return NextResponse.json(messages)
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       messageType: messageType || 'TEXT',
       senderId: user.id,
     },
-    include: { sender: { select: { name: true, designation: true } } },
+    include: { sender: { select: { name: true, designation: true, image: true } } },
   })
 
   // AI: detect maintenance messages and suggest MIS extraction

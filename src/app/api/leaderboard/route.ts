@@ -25,7 +25,8 @@ export async function GET(req: Request) {
         select: {
           name: true,
           designation: true,
-          email: true
+          email: true,
+          image: true
         }
       }
     },
@@ -36,24 +37,23 @@ export async function GET(req: Request) {
   })
 
   // Calculate activities count per user for the ranking display
-  // For simplicity, we'll return the score data and the UI can fetch more if needed, 
-  // or we can aggregate here. Let's aggregate for a better UX.
   
   const formattedLeaderboard = await Promise.all(leaderboard.map(async (entry: any) => {
     const activityCount = await prisma.maintenanceActivity.count({
       where: { createdById: entry.userId }
     })
     const inspectionCount = await prisma.motorInspection.count({
-      where: { inspectedBy: entry.user.name } // Note: we should use userId in model ideally, but let's stick to current schema
+      where: { inspectedBy: entry.user.name }
     })
 
     return {
       userId: entry.userId,
       name: entry.user.name,
       designation: entry.user.designation,
+      image: entry.user.image,
       points: entry[orderByField as keyof typeof entry],
       totalActivities: activityCount + inspectionCount,
-      rank: 0 // Will be assigned by client or after full fetch
+      rank: 0
     }
   }))
 

@@ -8,13 +8,12 @@ interface Champion {
   name: string
   points: number
   designation: string
+  image?: string
 }
 
 export default function WeeklyWinnerBanner() {
   const [champion, setChampion] = useState<Champion | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isSubscribed, setIsSubscribed] = useState(false)
-  const [permission, setPermission] = useState<NotificationPermission>('default')
 
   useEffect(() => {
     fetch('/api/leaderboard/champion')
@@ -27,170 +26,157 @@ export default function WeeklyWinnerBanner() {
         console.error('Error fetching champion:', err)
         setLoading(false)
       })
-
-    if ('Notification' in window) {
-      setPermission(Notification.permission)
-      checkSubscription()
-    }
   }, [])
-
-  const checkSubscription = async () => {
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
-    setIsSubscribed(!!subscription)
-  }
-
-  const urlBase64ToUint8Array = (base64String: string) => {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-    const rawData = window.atob(base64)
-    const outputArray = new Uint8Array(rawData.length)
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i)
-    }
-    return outputArray
-  }
-
-  const subscribe = async () => {
-    try {
-      const result = await Notification.requestPermission()
-      setPermission(result)
-      if (result !== 'granted') return
-
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!)
-      })
-
-      const res = await fetch('/api/notifications/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscription)
-      })
-
-      if (res.ok) {
-        setIsSubscribed(true)
-      }
-    } catch (err) {
-      console.error('Failed to subscribe:', err)
-    }
-  }
 
   if (loading || !champion) return null
 
+  const initials = champion.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+
   return (
-    <div className="mb-10 antialiased">
+    <div className="mb-14 antialiased">
       <Link href="/dashboard/leaderboard" className="block focus:outline-none">
         <motion.div 
-          initial={{ opacity: 0, scale: 0.99 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.01 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="group relative"
         >
-          {/* Main Card - High Contrast Deep Theme */}
-          <div className="relative overflow-hidden rounded-[24px] bg-[#0c111d] border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] transition-all duration-500 hover:border-blue-500/40">
+          {/* Main Card - Deep Cinematic Theme */}
+          <div className="relative overflow-hidden rounded-[32px] bg-[#0c111d] border border-white/5 shadow-[0_30px_70px_rgba(0,0,0,0.6)]">
             
-            {/* Glossy Overlay for Depth */}
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/[0.05] to-transparent"></div>
+            {/* Cinematic Light Sweep Background */}
+            <motion.div 
+              animate={{ 
+                x: ['-100%', '200%'],
+              }}
+              transition={{ 
+                duration: 6, 
+                repeat: Infinity, 
+                ease: "linear" 
+              }}
+              className="absolute inset-0 z-0 pointer-events-none opacity-20"
+              style={{
+                background: 'linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent)',
+              }}
+            />
 
-            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-7 sm:px-12 sm:py-10 gap-8">
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-10 p-8 sm:p-12">
               
-              <div className="flex flex-col md:flex-row items-center gap-10 text-center md:text-left">
-                {/* Prestige Badge - High Visibility */}
-                <div className="relative">
-                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-b from-[#1e293b] to-[#020617] border-2 border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] relative z-10">
-                    <div className="flex flex-col items-center">
-                      <span className="text-5xl leading-none mb-1 drop-shadow-lg">👑</span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 drop-shadow-md">TOP RATED</span>
-                    </div>
+              {/* Profile Side */}
+              <div className="relative flex-shrink-0">
+                <motion.div 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  className="relative group"
+                >
+                  {/* Glowing Ring around Profile */}
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute -inset-1.5 rounded-full bg-gradient-to-r from-blue-500 via-transparent to-blue-500 opacity-20 group-hover:opacity-40 transition-opacity"
+                  />
+                  
+                  <div 
+                    className="relative h-40 w-40 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden shadow-2xl flex items-center justify-center"
+                    style={{ minWidth: '160px', minHeight: '160px' }}
+                  >
+                    {champion.image ? (
+                      <div 
+                        className="absolute inset-0 w-full h-full"
+                        style={{ 
+                          backgroundImage: `url(${champion.image})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      />
+                    ) : (
+                      <span className="text-4xl font-black text-slate-500 uppercase tracking-tighter">{initials}</span>
+                    )}
                   </div>
-                  {/* Glowing Rings */}
-                  <div className="absolute inset-0 -m-1.5 rounded-full border border-blue-500/30 group-hover:border-blue-500/60 transition-colors duration-700"></div>
-                  <div className="absolute inset-0 -m-4 rounded-full border border-blue-500/5 animate-pulse"></div>
-                </div>
 
-                {/* Champion Info - Strong Typography */}
-                <div className="flex flex-col gap-2">
-                  <div className="inline-flex items-center self-center md:self-start gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
-                    <div className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse"></div>
-                    <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-blue-200">
-                      WEEKLY EXCELLENCE AWARD
+                  {/* Winner Crown Badge */}
+                  <motion.div 
+                     initial={{ y: 0 }}
+                     animate={{ y: [-2, 2, -2] }}
+                     transition={{ duration: 3, repeat: Infinity }}
+                     className="absolute -top-3 -right-3 h-12 w-12 rounded-full bg-amber-500 flex items-center justify-center shadow-lg border-2 border-[#0c111d] z-20"
+                  >
+                    <span className="text-2xl">👑</span>
+                  </motion.div>
+                </motion.div>
+              </div>
+
+              {/* Text Info Side */}
+              <div className="flex-1 text-center md:text-left">
+                <motion.div 
+                   initial={{ opacity: 0, x: -20 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ delay: 0.4 }}
+                   className="mb-4 inline-flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 rounded-full"
+                >
+                  <span className="text-sm">🏆</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">
+                    Weekly Champion Award
+                  </span>
+                </motion.div>
+
+                <motion.h2 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-5xl sm:text-6xl font-black text-white leading-tight uppercase tracking-tight mb-2"
+                >
+                  {champion.name}
+                </motion.h2>
+
+                <motion.p 
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   transition={{ delay: 0.6 }}
+                   className="text-slate-300 font-bold uppercase tracking-[0.2em] text-[12px] mb-8"
+                >
+                  {champion.designation} • Department of Electrical Maintenance
+                </motion.p>
+
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-12 pt-6 border-t border-white/10">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Performance Score</span>
+                    <span className="text-4xl font-black text-amber-500 tabular-nums leading-none">
+                      {champion.points.toLocaleString()}
+                      <span className="text-[12px] ml-1 text-amber-500/60">PTS</span>
                     </span>
                   </div>
                   
-                  <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight drop-shadow-sm">
-                    {champion.name}
-                  </h2>
-                  
-                  <div className="flex items-center justify-center md:justify-start gap-8 mt-1">
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Designation</span>
-                      <span className="text-lg font-bold text-white tracking-wide">{champion.designation}</span>
+                  <div className="h-10 w-px bg-white/10 hidden sm:block" />
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest leading-none">Status: Elite Performer</span>
                     </div>
-                    <div className="h-10 w-px bg-white/10"></div>
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Weekly Activity</span>
-                      <span className="text-lg font-black text-blue-400 flex items-center gap-1.5">
-                        <span className="text-2xl">{champion.points.toLocaleString()}</span>
-                        <span className="text-xs text-blue-300 font-bold uppercase tracking-tighter pt-1">Points</span>
-                      </span>
-                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Top 0.01% this week</span>
                   </div>
                 </div>
               </div>
 
-              {/* Status Badge & CTA */}
-              <div className="flex flex-col items-center md:items-end gap-8 flex-shrink-0">
-                <div className="text-right hidden md:block border-l-2 border-emerald-500/30 pl-4">
-                  <div className="flex items-center gap-2 mb-1 justify-end">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#4ade80]"></span>
-                    <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Verified Performance</span>
-                  </div>
-                  <p className="text-xs font-semibold text-slate-400">Leading the field this week</p>
-                </div>
-                
+              {/* Action Side */}
+              <div className="md:self-end pt-8 md:pt-0">
                 <motion.div 
-                  whileHover={{ y: -3, backgroundColor: '#f8fafc' }}
-                  whileTap={{ scale: 0.97 }}
-                  className="group/btn relative px-10 py-4 rounded-2xl bg-white text-[#0f172a] text-[12px] font-black uppercase tracking-[0.25em] shadow-[0_20px_40px_rgba(255,255,255,0.05)] transition-all"
+                  whileHover={{ x: 5 }}
+                  className="px-8 py-4 rounded-2xl bg-white/[0.03] border border-white/10 text-white text-[12px] font-black uppercase tracking-[0.3em] flex items-center gap-4 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 shadow-xl"
                 >
-                  Hall of Fame
-                  <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 rounded-b-2xl opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                  View Rankings
+                  <span className="text-xl">→</span>
                 </motion.div>
               </div>
 
             </div>
-
-            {/* Subtle Texture Overlay */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mt-[-100px]"></div>
           </div>
         </motion.div>
       </Link>
-
-      {/* Subscription Callout - Minimalist */}
-      {!isSubscribed && permission !== 'denied' && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="mt-6 flex items-center justify-between border-t border-white/5 pt-6"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-sm">🔔</span>
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-widest">
-              Join <span className="text-white">Performance Alerts</span> for weekly updates
-            </p>
-          </div>
-          <button 
-            onClick={(e) => { e.preventDefault(); subscribe(); }}
-            className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors"
-          >
-            Enable Access →
-          </button>
-        </motion.div>
-      )}
     </div>
   )
 }

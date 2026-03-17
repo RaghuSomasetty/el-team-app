@@ -15,7 +15,8 @@ export async function GET() {
         user: {
           select: {
             name: true,
-            designation: true
+            designation: true,
+            image: true
           }
         }
       },
@@ -32,7 +33,8 @@ export async function GET() {
       champion: {
         name: topScore.user.name,
         points: topScore.weeklyPoints,
-        designation: topScore.user.designation
+        designation: topScore.user.designation,
+        image: topScore.user.image
       }
     })
   } catch (error) {

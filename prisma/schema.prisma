@@ -12,11 +12,14 @@ datasource db {
 model User {
   id           String   @id @default(cuid())
   name         String
+  employeeId   String?  @unique
   email        String   @unique
   phone        String?
-  designation  String   // Engineer, Supervisor, Technician
+  department   String?  // Electrical, Mechanical, Operation, Instrumentation
+  designation  String?  // Engineer, Supervisor, Technician
   passwordHash String
   role         String   @default("TECHNICIAN") // ENGINEER, SUPERVISOR, TECHNICIAN
+  image        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

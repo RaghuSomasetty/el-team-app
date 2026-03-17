@@ -463,9 +463,32 @@ export const exportBatteryInspectionToPDF = (inspection: any, readings: any[]) =
     
     if (inspection.aiAnalysis) {
       const yPos = 35 + (splitObs.length * 6) + 10
-      doc.text('VoltMind AI Recommendations:', 14, yPos)
-      const splitAI = doc.splitTextToSize(inspection.aiAnalysis, 180)
-      doc.text(splitAI, 14, yPos + 5)
+      doc.setFontSize(13)
+      doc.setTextColor(59, 130, 246)
+      doc.text('VoltMind AI Section-wise Recommendations', 14, yPos)
+      
+      let currentY = yPos + 8
+      inspection.aiAnalysis.split(' | ').forEach((block: string, idx: number) => {
+        const recommendations = inspection.recommendations?.split(' | ')[idx] || ''
+        
+        doc.setFontSize(10)
+        doc.setTextColor(0)
+        doc.setFont('helvetica', 'bold')
+        const splitBlock = doc.splitTextToSize(block, 180)
+        doc.text(splitBlock, 14, currentY)
+        currentY += (splitBlock.length * 5) + 2
+        
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(50, 50, 50)
+        const splitRec = doc.splitTextToSize(`Recommendation: ${recommendations.split(': ')[1] || recommendations}`, 175)
+        doc.text(splitRec, 18, currentY)
+        currentY += (splitRec.length * 5) + 5
+        
+        if (currentY > 270) {
+          doc.addPage()
+          currentY = 20
+        }
+      })
     }
   }
 

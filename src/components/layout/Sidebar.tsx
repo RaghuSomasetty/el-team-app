@@ -8,12 +8,14 @@ import { motion } from 'framer-motion'
 const navItems = [
   { section: 'Overview', items: [
     { href: '/dashboard', icon: '⚡', label: 'Dashboard' },
+    { href: '/dashboard/profile', icon: '👤', label: 'My Profile' },
     { href: '/dashboard/leaderboard', icon: '🏆', label: 'Leaderboard' },
     { href: '/dashboard/analytics', icon: '📊', label: 'Analytics' },
     { href: '/dashboard/search', icon: '🔍', label: 'Global Search' },
   ]},
   { section: 'Maintenance', items: [
     { href: '/dashboard/mis', icon: '📋', label: 'Daily MIS', roles: ['ENGINEER', 'SUPERVISOR'] },
+    { href: '/dashboard/battery-inspection', icon: '🔋', label: 'Battery Inspection' },
     { href: '/dashboard/upload', icon: '📸', label: 'Upload Activity' },
     { href: '/dashboard/gallery', icon: '🖼️', label: 'Image Gallery' },
     { href: '/dashboard/history', icon: '📜', label: 'History' },
@@ -41,9 +43,10 @@ interface Props {
 export default function Sidebar({ mobileOpen, onClose }: Props) {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const role = (session?.user as any)?.role || 'TECHNICIAN'
+  const user = session?.user as any
+  const role = user?.role || 'TECHNICIAN'
+  const profileImage = user?.image
 
-  
   return (
     <>
       {mobileOpen && <div className="sidebar-overlay" onClick={onClose} />}
@@ -92,12 +95,24 @@ export default function Sidebar({ mobileOpen, onClose }: Props) {
 
         <div style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700 }}>
-              {session?.user?.name?.[0]}
-            </div>
+            <Link href="/dashboard/profile" onClick={onClose} style={{ textDecoration: 'none' }}>
+              <div style={{ 
+                width: '44px', height: '44px', borderRadius: '14px', 
+                background: profileImage ? `url(${profileImage})` : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                backgroundSize: 'cover', backgroundPosition: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                fontSize: '18px', fontWeight: 700, border: '2px solid rgba(255,255,255,0.1)',
+                position: 'relative', overflow: 'hidden'
+              }}>
+                {!profileImage && user?.name?.[0]}
+                <div style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--accent-blue)', borderRadius: '50%', width: '12px', height: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6px', border: '2px solid #0a0f1e' }}>
+                  ⚙️
+                </div>
+              </div>
+            </Link>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>{session?.user?.name}</div>
-              <div style={{ fontSize: '11px', color: 'var(--accent-blue)', fontWeight: 600 }}>{role}</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>{user?.name}</div>
+              <div style={{ fontSize: '11px', color: 'var(--accent-blue)', fontWeight: 600 }}>{user?.designation || role}</div>
             </div>
           </div>
           <button

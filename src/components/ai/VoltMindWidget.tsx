@@ -29,7 +29,7 @@ export default function VoltMindWidget() {
       }}
     >
       <span className="widget-label" style={{ fontWeight: 700, letterSpacing: '0.5px' }}>VoltMind AI 2.0</span>
-      <span className="widget-icon" style={{ fontSize: '20px' }}>🧠</span>
+      <span className="widget-icon" style={{ fontSize: '20px' }}>💡</span>
     </motion.div>
   )
 }
