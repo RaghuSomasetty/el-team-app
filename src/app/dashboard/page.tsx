@@ -125,10 +125,10 @@ export default function DashboardPage() {
   }
 
   const kpis = [
-    { label: "Today's MIS Entries", value: stats.todayMIS, icon: '📋', color: 'rgba(59,130,246,0.1)', iconColor: '#3b82f6', change: '+3 from yesterday', up: true },
-    { label: 'Motors in Database', value: stats.motors, icon: '⚙️', color: 'rgba(57,184,255,0.1)', iconColor: '#38bdf8', change: 'Total registered', up: true },
-    { label: 'Activities Uploaded', value: stats.activities, icon: '📸', color: 'rgba(16,185,129,0.1)', iconColor: '#10b981', change: 'All time', up: true },
-    { label: 'Pending Approvals', value: stats.pending, icon: '⏳', color: 'rgba(239, 68, 68, 0.1)', iconColor: '#ef4444', change: 'Awaiting review', up: false },
+    { label: "Today's MIS", value: stats.todayMIS, icon: '📋', color: 'rgba(59,130,246,0.1)', iconColor: '#3b82f6', change: '+3 from yesterday', up: true },
+    { label: 'TS-7 Power (Today)', value: powerStats?.today ? `${formatPowerValue(powerStats.today.totalConsumption / 1000)} MWh` : '...', icon: '⚡', color: 'rgba(168,85,247,0.1)', iconColor: '#a855f7', change: powerStats?.monthly ? `${formatPowerValue(powerStats.monthly.total / 1000)} MWh this month` : 'Syncing...', up: true },
+    { label: 'Motors in DB', value: stats.motors, icon: '⚙️', color: 'rgba(57,184,255,0.1)', iconColor: '#38bdf8', change: 'Total registered', up: true },
+    { label: 'Pending Approval', value: stats.pending, icon: '⏳', color: 'rgba(239, 68, 68, 0.1)', iconColor: '#ef4444', change: 'Awaiting review', up: false },
   ]
 
   return (
