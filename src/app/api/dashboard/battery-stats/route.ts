@@ -43,7 +43,10 @@ export async function GET() {
       status: status,
       v110: v110Match ? parseFloat(v110Match[1]) : null,
       v24: v24Match ? parseFloat(v24Match[1]) : null,
-      recommendation: (latestInspection.recommendations || '').split('|')[0].trim()
+      recommendation: (latestInspection.recommendations || '').split('|')[0].trim(),
+      criticalCount: latestInspection.criticalCount,
+      warningCount: latestInspection.warningCount,
+      healthyCount: latestInspection.healthyCount
     }
 
     return NextResponse.json(stats)

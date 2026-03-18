@@ -196,6 +196,21 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '28px', position: 'relative' }}>
+              <div className="stats-card-mini" style={{ borderLeft: '3px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Critical</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: '#ef4444' }}>{batteryStats?.criticalCount || 0}</div>
+              </div>
+              <div className="stats-card-mini" style={{ borderLeft: '3px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Warning</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: '#f59e0b' }}>{batteryStats?.warningCount || 0}</div>
+              </div>
+              <div className="stats-card-mini" style={{ borderLeft: '3px solid #10b981', background: 'rgba(16, 185, 129, 0.05)' }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Healthy</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: '#10b981' }}>{batteryStats?.healthyCount || 0}</div>
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '28px' }}>
               <div className="stats-card-mini">
                 <div style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Charge Level</div>
