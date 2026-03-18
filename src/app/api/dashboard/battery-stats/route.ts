@@ -36,18 +36,18 @@ export async function GET() {
     if (latestInspection.criticalCount > 0) status = 'CRITICAL'
     else if (latestInspection.warningCount > 0) status = 'WARNING'
 
-    // Get section-wise average voltages
+    // Get section-wise total voltages
     const sectionReadings = await prisma.batteryReading.groupBy({
       by: ['section'],
       where: { inspectionId: latestInspection.id },
-      _avg: {
+      _sum: {
         voltage: true
       }
     })
 
     const sectionVoltages = sectionReadings.map(r => ({
       section: r.section,
-      avgVoltage: r._avg.voltage ? parseFloat(r._avg.voltage.toFixed(2)) : null
+      totalVoltage: r._sum.voltage ? parseFloat(r._sum.voltage.toFixed(2)) : null
     }))
 
     const stats = {

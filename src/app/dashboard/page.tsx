@@ -214,7 +214,7 @@ export default function DashboardPage() {
             {/* Section Voltages Breakdown */}
             {batteryStats?.sections && batteryStats.sections.length > 0 && (
               <div style={{ marginBottom: '28px' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Bank Voltages (AVG)</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Bank Voltages (TOTAL)</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
                   {batteryStats.sections.map((sec: any) => (
                     <div key={sec.section} className="stats-card-mini" style={{ background: 'rgba(255,255,255,0.02)', padding: '8px 12px' }}>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                         {sec.section.replace(/_/g, ' ')}
                       </div>
                       <div style={{ fontSize: '14px', fontWeight: 900, color: 'var(--accent-blue)' }}>
-                        {sec.avgVoltage}<span style={{ fontSize: '10px', marginLeft: '2px' }}>V</span>
+                        {sec.totalVoltage}<span style={{ fontSize: '10px', marginLeft: '2px' }}>V</span>
                       </div>
                     </div>
                   ))}
