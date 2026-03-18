@@ -394,106 +394,170 @@ export const exportGenericTableToWord = async (title: string, headers: string[],
 
 export const exportBatteryInspectionToPDF = (inspection: any, readings: any[]) => {
   const doc = new jsPDF()
+  const now = new Date().toLocaleString('en-IN')
   
-  // Header
+  // Industrial Header (Consistent with Power Report)
+  doc.setFillColor(30, 41, 59) // slate-800
+  doc.rect(0, 0, 210, 40, 'F')
+  
+  doc.setTextColor(255, 255, 255)
   doc.setFontSize(22)
-  doc.setTextColor(59, 130, 246)
-  doc.text('Battery System Inspection Report', 14, 22)
+  doc.setFont('helvetica', 'bold')
+  doc.text('BATTERY SYSTEM INSPECTION', 14, 25)
+  
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Recorded: ${new Date(inspection.date).toLocaleString('en-IN')}`, 14, 33)
   
   doc.setFontSize(10)
-  doc.setTextColor(100)
-  doc.text(`Generated on: ${new Date(inspection.date).toLocaleString('en-IN')}`, 14, 30)
-  doc.text(`Inspector: ${inspection.inspectorName}`, 14, 35)
+  doc.text(`Inspector: ${inspection.inspectorName}`, 140, 25)
+  doc.text(`Report ID: #${inspection.id.slice(-6).toUpperCase()}`, 140, 33)
 
-  // Summary Table
+  // Summary KPI Section
+  doc.setTextColor(0, 0, 0)
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Health Summary', 14, 55)
+  
   autoTable(doc, {
-    startY: 45,
-    head: [['Health Summary', 'Value']],
+    startY: 60,
+    head: [['System Metric', 'Status / Value', 'System Analysis']],
     body: [
-      ['Total Batteries', inspection.totalBatteries],
-      ['Healthy (Green)', inspection.healthyCount],
-      ['Warning (Orange)', inspection.warningCount],
-      ['Critical (Red)', inspection.criticalCount],
-      ['110V Bank Total Voltage', `${inspection.totalVoltage_110V || '—'} V`],
-      ['110V Bank Avg Voltage', `${inspection.averageVoltage_110V || '—'} V`],
+      ['Total Batteries', inspection.totalBatteries, 'Full bank unit count'],
+      ['Healthy Status', inspection.healthyCount, 'Operating within parameters'],
+      ['Warning Status', inspection.warningCount, 'Requires near-term attention'],
+      ['Critical Status', inspection.criticalCount, 'Immediate replacement/action required'],
+      ['110V Bank Voltage', `${inspection.totalVoltage_110V?.toFixed(1) || '—'} V`, 'Total aggregated bank voltage'],
+      ['110V Avg Cell', `${inspection.averageVoltage_110V?.toFixed(2) || '—'} V`, 'Mean voltage per individual cell'],
     ],
-    theme: 'striped',
-    headStyles: { fillColor: [59, 130, 246] }
+    theme: 'grid',
+    headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { fontStyle: 'bold' },
+      1: { halign: 'center', fontStyle: 'bold' }
+    }
   })
 
-  // Readings Table
-  const finalY = (doc as any).lastAutoTable.finalY || 45
-  doc.setTextColor(0)
+  // Readings Table with Color Coding
+  const finalY = (doc as any).lastAutoTable.finalY || 60
   doc.setFontSize(14)
-  doc.text('Detailed Readings', 14, finalY + 15)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Detailed Cell Readings', 14, finalY + 15)
   
   autoTable(doc, {
     startY: finalY + 20,
-    head: [['Section', 'No', 'Voltage (V)', 'Gravity', 'Status']],
+    head: [['Section Name', 'Cell No', 'Voltage (V)', 'Sp. Gravity', 'Health Status']],
     body: readings.map((r: any) => [
       r.section.replace(/_/g, ' '),
-      r.batteryNumber,
-      r.voltage || '—',
-      r.specificGravity || '—',
+      `C${r.batteryNumber}`,
+      r.voltage?.toFixed(2) || '—',
+      r.specificGravity?.toFixed(3) || '—',
       r.status
     ]),
-    theme: 'grid',
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [59, 130, 246] },
+    theme: 'striped',
+    styles: { fontSize: 8, cellPadding: 3 },
+    headStyles: { fillColor: [30, 41, 59] },
     didParseCell: (data) => {
       if (data.section === 'body' && data.column.index === 4) {
-        if (data.cell.raw === 'CRITICAL') data.cell.styles.textColor = [239, 68, 68];
-        if (data.cell.raw === 'WARNING') data.cell.styles.textColor = [245, 158, 11];
-        if (data.cell.raw === 'NORMAL') data.cell.styles.textColor = [16, 185, 129];
+        const status = data.cell.raw;
+        if (status === 'CRITICAL') {
+          data.cell.styles.textColor = [220, 38, 38]; // red-600
+          data.cell.styles.fontStyle = 'bold';
+        } else if (status === 'WARNING') {
+          data.cell.styles.textColor = [217, 119, 6]; // amber-600
+          data.cell.styles.fontStyle = 'bold';
+        } else {
+          data.cell.styles.textColor = [5, 150, 105]; // emerald-600
+        }
       }
     }
   })
 
-  // Observations
+  // Page 2: AI Analysis & Observations
   if (inspection.observations || inspection.aiAnalysis) {
-    const tableFinalY = (doc as any).lastAutoTable.finalY
     doc.addPage()
-    doc.setFontSize(16)
-    doc.text('Observations & AI Analysis', 14, 20)
     
+    // Header for Page 2
+    doc.setFillColor(30, 41, 59)
+    doc.rect(0, 0, 210, 20, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(12)
+    doc.text('OBSERVATIONS & AI ANALYTICS', 14, 13)
+    
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Technician Observations:', 14, 35)
+    
+    doc.setFont('helvetica', 'italic')
     doc.setFontSize(11)
-    doc.text('Observations:', 14, 30)
-    const splitObs = doc.splitTextToSize(inspection.observations || 'None', 180)
-    doc.text(splitObs, 14, 35)
+    const splitObs = doc.splitTextToSize(inspection.observations || 'No manual observations recorded.', 180)
+    doc.text(splitObs, 14, 42)
     
     if (inspection.aiAnalysis) {
-      const yPos = 35 + (splitObs.length * 6) + 10
-      doc.setFontSize(13)
-      doc.setTextColor(59, 130, 246)
-      doc.text('VoltMind AI Section-wise Recommendations', 14, yPos)
+      let currentY = 42 + (splitObs.length * 6) + 15
       
-      let currentY = yPos + 8
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(14)
+      doc.setTextColor(37, 99, 235) // blue-600
+      doc.text('VoltMind AI Sectional Insights', 14, currentY)
+      currentY += 10
+      
       inspection.aiAnalysis.split(' | ').forEach((block: string, idx: number) => {
         const recommendations = inspection.recommendations?.split(' | ')[idx] || ''
         
-        doc.setFontSize(10)
-        doc.setTextColor(0)
-        doc.setFont('helvetica', 'bold')
-        const splitBlock = doc.splitTextToSize(block, 180)
-        doc.text(splitBlock, 14, currentY)
-        currentY += (splitBlock.length * 5) + 2
+        // Section Card Background
+        doc.setFillColor(248, 250, 252)
+        const blockText = block.split('] ')[1] || block;
+        const sectionName = block.split('] ')[0].replace('[', '') || 'Section Analysis';
         
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor(50, 50, 50)
-        const splitRec = doc.splitTextToSize(`Recommendation: ${recommendations.split(': ')[1] || recommendations}`, 175)
-        doc.text(splitRec, 18, currentY)
-        currentY += (splitRec.length * 5) + 5
+        const splitContent = doc.splitTextToSize(blockText, 170)
+        const splitRec = doc.splitTextToSize(`Recommendation: ${recommendations.split(': ')[1] || recommendations}`, 165)
         
-        if (currentY > 270) {
+        const cardHeight = (splitContent.length * 5) + (splitRec.length * 5) + 20
+        
+        if (currentY + cardHeight > 270) {
           doc.addPage()
           currentY = 20
         }
+        
+        doc.rect(14, currentY, 182, cardHeight, 'F')
+        doc.setDrawColor(226, 232, 240)
+        doc.rect(14, currentY, 182, cardHeight)
+        
+        doc.setFontSize(10)
+        doc.setTextColor(30, 41, 59)
+        doc.setFont('helvetica', 'bold')
+        doc.text(sectionName, 20, currentY + 8)
+        
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(71, 85, 105)
+        doc.text(splitContent, 20, currentY + 15)
+        
+        currentY += (splitContent.length * 5) + 18
+        
+        doc.setTextColor(5, 150, 105) // emerald-600
+        doc.setFont('helvetica', 'bold')
+        doc.text('💡', 20, currentY)
+        doc.text(splitRec, 26, currentY)
+        
+        currentY += (splitRec.length * 5) + 12
       })
     }
   }
 
+  // Common Footer for all pages
+  const pageCount = (doc as any).internal.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setTextColor(148, 163, 184)
+    doc.text(`Generated by VoltMind AI – Page ${i} of ${pageCount}`, 105, 287, { align: 'center' })
+    doc.text(`Ref: EL-TEAM/BATT/${inspection.id.slice(-4).toUpperCase()}`, 196, 287, { align: 'right' })
+  }
+
   const blob = doc.output('blob')
-  saveAs(blob, `Battery_Inspection_${new Date(inspection.date).toISOString().split('T')[0]}.pdf`)
+  saveAs(blob, `Battery_Report_${new Date(inspection.date).toISOString().split('T')[0]}.pdf`)
 }
 
 export const exportPowerToPDF = (readings: any[], options?: { title?: string, subtitle?: string }) => {
