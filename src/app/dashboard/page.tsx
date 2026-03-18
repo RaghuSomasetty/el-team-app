@@ -7,8 +7,12 @@ import FadeIn from '@/components/animations/FadeIn'
 import WeeklyWinnerBanner from '@/components/dashboard/WeeklyWinnerBanner'
 import { formatPowerValue } from '@/lib/powerUtils'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts'
+import { 
+  Zap, Battery, Thermometer, Activity, Clock, ArrowUpRight, AlertTriangle, CheckCircle2, 
+  Info, History, Gauge
+} from 'lucide-react'
 
 const MOCK_TREND = Array.from({ length: 14 }, (_, i) => ({
   day: `Mar ${i + 1}`,
@@ -33,6 +37,11 @@ const WORK_TYPE_DATA = [
   { name: 'Lighting', value: 12, fill: '#f59e0b' },
   { name: 'Breaker', value: 8, fill: '#8b5cf6' },
 ]
+
+const MOCK_POWER_REALTIME = Array.from({ length: 24 }, (_, i) => ({
+  time: `${i}:00`,
+  usage: 450 + Math.sin(i / 3.5) * 150 + Math.random() * 50
+}))
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -134,14 +143,172 @@ export default function DashboardPage() {
   return (
     <DashboardLayout title="Dashboard" subtitle="Electrical Maintenance Overview">
       <WeeklyWinnerBanner />
-      {/* Live indicator */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-        <span className="dot-live" />
-        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-          Live — {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </span>
-      </div>
       
+      {/* Live indicator */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="dot-live" />
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+            LIVE SYSTEM FEED — {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </span>
+        </div>
+        <div style={{ fontSize: '11px', color: 'var(--accent-blue)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>
+          PLANT: TS-7 DRI
+        </div>
+      </div>
+
+      {/* Primary Status Grid */}
+      <div className="grid-2" style={{ marginBottom: '32px', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))' }}>
+        {/* Card 1: Battery System Health */}
+        <FadeIn delay={0.1} direction="left">
+          <div className="glass-panel neon-border-blue" style={{ borderRadius: '24px', padding: '28px', position: 'relative', overflow: 'hidden' }}>
+            <div className="grid-bg-subtle" style={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none' }} />
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', position: 'relative' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                  <Battery size={16} className="neon-text-blue" />
+                  <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Battery System Health</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span style={{ fontSize: '48px', fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}>
+                    {batteryStats?.v110 || '127.9'}
+                  </span>
+                  <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--accent-blue)' }}>V</span>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span className={`badge ${batteryStats?.status === 'GOOD' ? 'badge-green' : 'badge-amber'}`} style={{ padding: '6px 14px', borderRadius: '12px', fontSize: '10px', fontWeight: 900 }}>
+                  {batteryStats?.status === 'GOOD' ? <CheckCircle2 size={12} style={{marginRight: '4px'}} /> : <AlertTriangle size={12} style={{marginRight: '4px'}} />}
+                  {batteryStats?.status || 'OPTIMAL'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '32px', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                <span>Health Index</span>
+                <span style={{ color: 'var(--accent-green)' }}>Excellent</span>
+              </div>
+              <div className="health-bar-container">
+                <div className="health-bar-gradient" />
+                <div className="health-indicator-dot" style={{ left: '15%' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '28px' }}>
+              <div className="stats-card-mini">
+                <div style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Charge Level</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
+                  <span style={{ fontSize: '20px', fontWeight: 800 }}>98</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-green)', marginBottom: '3px' }}>%</span>
+                </div>
+              </div>
+              <div className="stats-card-mini">
+                <div style={{ color: 'var(--text-muted)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Temperature</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
+                  <span style={{ fontSize: '20px', fontWeight: 800 }}>28.4</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-amber)', marginBottom: '3px' }}>°C</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Clock size={14} color="var(--text-muted)" />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                  Remind in: <span style={{ color: '#fff' }}>12 Days</span>
+                </span>
+              </div>
+              <button 
+                onClick={() => router.push(batteryStats?.inspectionId ? `/dashboard/battery-inspection/${batteryStats.inspectionId}` : '/dashboard/battery-inspection/reports')}
+                className="btn btn-secondary btn-sm hover-glow"
+                style={{ background: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.2)', fontSize: '10px', fontWeight: 800, borderRadius: '12px' }}
+              >
+                VIEW REPORT <ArrowUpRight size={12} />
+              </button>
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Card 2: Power Consumption */}
+        <FadeIn delay={0.2} direction="right">
+          <div className="glass-panel neon-border-green" style={{ borderRadius: '24px', padding: '28px', position: 'relative', overflow: 'hidden' }}>
+            <div className="grid-bg-subtle" style={{ position: 'absolute', inset: 0, opacity: 0.3, pointerEvents: 'none' }} />
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
+                <Zap size={16} className="neon-text-green" />
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Power Consumption</span>
+              </div>
+              <button 
+                onClick={() => router.push('/dashboard/power-consumption')}
+                className="btn btn-secondary btn-sm hover-glow"
+                style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)', fontSize: '10px', fontWeight: 800, borderRadius: '12px' }}
+              >
+                VIEW MONITOR <ArrowUpRight size={12} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px', position: 'relative' }}>
+              <div className="stats-card-mini">
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Daily (kWh)</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff' }}>
+                  {powerStats?.today ? formatPowerValue(powerStats.today.totalConsumption) : '1,240'}
+                </div>
+              </div>
+              <div className="stats-card-mini">
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Monthly (MWh)</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--accent-green)' }}>
+                  {powerStats?.monthly ? formatPowerValue(powerStats.monthly.total / 1000) : '42.8'}
+                </div>
+              </div>
+              <div className="stats-card-mini">
+                <div style={{ color: 'var(--text-muted)', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Peak (kVA)</div>
+                <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--accent-amber)' }}>
+                   {powerStats?.monthly?.max ? formatPowerValue(powerStats.monthly.max.totalConsumption / 100) : '842'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: '160px', position: 'relative', marginLeft: '-20px', marginRight: '-20px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={MOCK_POWER_REALTIME}>
+                  <defs>
+                    <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip 
+                    contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', fontSize: '12px' }}
+                    itemStyle={{ color: '#10b981' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="usage" 
+                    stroke="#10b981" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#usageGradient)" 
+                    animationDuration={2000}
+                  />
+                  <XAxis 
+                    dataKey="time" 
+                    hide 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', padding: '0 20px' }}>
+                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)' }}>MORNING</span>
+                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)' }}>NOON</span>
+                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)' }}>NIGHT</span>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+
       {/* Critical Motor Alerts Section */}
       {inspections.filter(i => i.abnormality?.includes('[AI ALERT:')).length > 0 && (
         <FadeIn delay={0.2}>
@@ -261,14 +428,14 @@ export default function DashboardPage() {
         </FadeIn>
       </div>
 
-      {/* Charts Row 2 & Leaderboard */}
+      {/* Secondary Data Sections */}
       <div className="grid-sidebar-layout" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="chart-card">
+          <div className="chart-card glass-panel hover-glow">
             <div className="chart-title">🏭 Area-wise Maintenance Load</div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={AREA_DATA} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.5)" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.2)" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#475569' }} />
                 <YAxis dataKey="area" type="category" tick={{ fontSize: 10, fill: '#94a3b8' }} width={70} />
                 <Tooltip contentStyle={{ background: '#1a2235', border: '1px solid #1e3a5f', borderRadius: '8px', fontSize: '12px' }} />
@@ -279,123 +446,7 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </div>
 
-          <div className="card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '24px' }}>
-            <div className="chart-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <span className="flex items-center gap-2 text-white/90">
-                <span className="text-xl">🔋</span>
-                <span className="font-black uppercase tracking-widest text-[11px]">Battery System Health</span>
-              </span>
-              {batteryStats?.hasData && (
-                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                  batteryStats.status === 'GOOD' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
-                  batteryStats.status === 'WARNING' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
-                  'bg-red-500/10 text-red-500 border border-red-500/20'
-                }`}>
-                  {batteryStats.status}
-                </span>
-              )}
-            </div>
-
-            {batteryStats?.hasData ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">110V Bank</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-black text-white">{batteryStats.v110 || '--'}</span>
-                      <span className="text-[10px] font-bold text-slate-600">V</span>
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">24V Bank</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-black text-white">{batteryStats.v24 || '--'}</span>
-                      <span className="text-[10px] font-bold text-slate-600">V</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-blue-500/[0.03] border border-blue-500/10">
-                  <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <span className="text-xs">🤖</span> AI RECOMMENDATION
-                  </p>
-                  <p className="text-[11px] font-bold text-slate-300 leading-relaxed italic">
-                    "{batteryStats.recommendation || 'No anomalies detected in latest inspection.'}"
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
-                    Last Inspected: {new Date(batteryStats.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                  </span>
-                  <button 
-                    className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
-                    onClick={() => router.push(`/dashboard/battery-inspection/${batteryStats.inspectionId}`)}
-                  >
-                    View Report →
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="py-8 text-center border-2 border-dashed border-white/5 rounded-3xl">
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">No Inspection Data</p>
-                <button 
-                  className="btn btn-primary btn-sm"
-                  onClick={() => router.push('/dashboard/battery-inspection/new')}
-                >
-                  Start First Inspection
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '24px' }}>
-            <div className="chart-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <span className="flex items-center gap-2 text-white/90">
-                <span className="text-xl">⚡</span>
-                <span className="font-black uppercase tracking-widest text-[11px]">Power Consumption (TS-7)</span>
-              </span>
-            </div>
-
-            {powerStats ? (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Today's Usage</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-black text-white">{powerStats.today ? formatPowerValue(powerStats.today.totalConsumption / 1000) : '0.00'}</span>
-                      <span className="text-[10px] font-bold text-blue-400">MWh</span>
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Monthly Total</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xl font-black text-white">{powerStats.monthly ? formatPowerValue(powerStats.monthly.total / 1000) : '0.00'}</span>
-                      <span className="text-[10px] font-bold text-purple-400">MWh</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
-                    Avg Daily Load: {powerStats.monthly ? formatPowerValue(powerStats.monthly.average) : '0.00'} kWh
-                  </span>
-                  <button 
-                    className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
-                    onClick={() => router.push('/dashboard/power-consumption')}
-                  >
-                    View Monitor →
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="py-12 text-center text-slate-500">
-                <span className="spinner" />
-              </div>
-            )}
-          </div>
-
-          <div className="card">
+          <div className="card glass-panel hover-glow">
             <div className="chart-title">📋 Recent MIS Entries</div>
             {recentMIS.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
@@ -432,7 +483,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '24px' }}>
+        <div className="card glass-panel hover-glow" style={{ borderRadius: '24px', padding: '24px' }}>
           <div className="chart-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
             <span className="flex items-center gap-2">
               <span className="text-xl">🏆</span> 
@@ -495,7 +546,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <FadeIn delay={0.8}>
-        <div className="card hover-glow">
+        <div className="card glass-panel hover-glow" style={{ borderRadius: '24px' }}>
           <div className="chart-title">⚡ Quick Actions</div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {[
@@ -510,15 +561,15 @@ export default function DashboardPage() {
                 key={a.label} 
                 className={`btn ${a.color}`} 
                 onClick={() => router.push(a.href)}
-                style={{ transitionDelay: `${i * 50}ms` }}
+                style={{ transitionDelay: `${i * 50}ms`, borderRadius: '12px' }}
               >
                 {a.label}
               </button>
             ))}
             
-            {/* Test Push Notification Button - Only for Development/Testing */}
             <button 
               className="btn btn-secondary border border-red-500/50 hover:bg-red-500/10"
+              style={{ borderRadius: '12px' }}
               onClick={async () => {
                 if (!confirm('This will broadcast a motivational quote to ALL registered devices. Proceed?')) return;
                 try {
