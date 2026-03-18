@@ -1,5 +1,5 @@
-'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, LineChart, Line, Legend } from 'recharts'
 
@@ -20,6 +20,16 @@ const RADAR_DATA = [
 ]
 
 export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="spinner" /></div>}>
+      <AnalyticsContent />
+    </Suspense>
+  )
+}
+
+function AnalyticsContent() {
+  const searchParams = useSearchParams()
+  const tagParam = searchParams.get('tag')
   const [stats, setStats] = useState<any>(null)
   const [inspections, setInspections] = useState<any[]>([])
   const [motors, setMotors] = useState<any[]>([])
@@ -31,8 +41,23 @@ export default function AnalyticsPage() {
   useEffect(() => {
     fetch('/api/reports/monthly').then(r => r.json()).then(setStats).catch(() => {})
     fetch('/api/inspections?limit=100').then(r => r.json()).then(setInspections).catch(() => {})
-    fetch('/api/motors').then(r => r.json()).then(setMotors).catch(() => {})
-  }, [])
+    fetch('/api/motors').then(r => r.json()).then(data => {
+      setMotors(data)
+      
+      // Auto-select motor from URL if present
+      if (tagParam && Array.isArray(data)) {
+        const motor = data.find(m => m.motorTag === tagParam)
+        if (motor) {
+          const v = motor.voltage?.toLowerCase() || ''
+          if (v.includes('10') || v.includes('6.6')) setTrendCat('10kV')
+          else if (v.includes('3')) setTrendCat('3kV')
+          else setTrendCat('LT')
+          
+          setSelectedMotorTag(tagParam)
+        }
+      }
+    }).catch(() => {})
+  }, [tagParam])
 
   useEffect(() => {
     if (selectedMotorTag) {

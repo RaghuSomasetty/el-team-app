@@ -186,7 +186,7 @@ export default function DashboardPage() {
                   borderRadius: '16px', 
                   borderLeft: '4px solid #ef4444',
                   cursor: 'pointer'
-                }} onClick={() => router.push(`/dashboard/motors/${m.motorTag}`)}>
+                }} onClick={() => router.push(`/dashboard/analytics?tag=${m.motorTag}`)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ fontWeight: 800, fontSize: '13px', color: '#fff' }}>{m.motorTag}</span>
                     <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{new Date(m.inspectedAt).toLocaleDateString()}</span>
