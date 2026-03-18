@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import FadeIn from '@/components/animations/FadeIn'
 import WeeklyWinnerBanner from '@/components/dashboard/WeeklyWinnerBanner'
+import { formatPowerValue } from '@/lib/powerUtils'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
@@ -40,6 +41,7 @@ export default function DashboardPage() {
   const [recentMIS, setRecentMIS] = useState<any[]>([])
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [batteryStats, setBatteryStats] = useState<any>(null)
+  const [powerStats, setPowerStats] = useState<any>(null)
   const [inspections, setInspections] = useState<any[]>([])
 
   useEffect(() => {
@@ -61,10 +63,11 @@ export default function DashboardPage() {
     const cached = sessionStorage.getItem('el-dashboard-stats')
     if (cached) {
       try {
-        const { stats: s, mis, battery, inspections: insp } = JSON.parse(cached)
+        const { stats: s, mis, battery, power, inspections: insp } = JSON.parse(cached)
         setStats(s)
         setRecentMIS(mis)
         setBatteryStats(battery)
+        if (power) setPowerStats(power)
         if (insp) setInspections(insp)
       } catch {}
     }
@@ -74,7 +77,7 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
-      const [misRes, motorRes, actRes, pendingRes, leaderRes, batteryRes, inspRes] = await Promise.all([
+      const [misRes, motorRes, actRes, pendingRes, leaderRes, batteryRes, inspRes, powerRes] = await Promise.all([
         fetch(`/api/mis?date=${today}`),
         fetch('/api/motors'),
         fetch('/api/activities'),
@@ -82,9 +85,10 @@ export default function DashboardPage() {
         fetch('/api/leaderboard?timeframe=weekly'),
         fetch('/api/dashboard/battery-stats'),
         fetch('/api/inspections?limit=100'),
+        fetch('/api/power-readings/stats'),
       ])
-      const [mis, motors, activities, pending, leaders, battery, insp] = await Promise.all([
-        misRes.json(), motorRes.json(), actRes.json(), pendingRes.json(), leaderRes.json(), batteryRes.json(), inspRes.json()
+      const [mis, motors, activities, pending, leaders, battery, insp, power] = await Promise.all([
+        misRes.json(), motorRes.json(), actRes.json(), pendingRes.json(), leaderRes.json(), batteryRes.json(), inspRes.json(), powerRes.json()
       ])
       const newStats = {
         todayMIS: Array.isArray(mis) ? mis.length : 0,
@@ -99,6 +103,7 @@ export default function DashboardPage() {
       setRecentMIS(newMIS)
       setLeaderboard(newLeaders)
       setBatteryStats(battery)
+      setPowerStats(power)
       setInspections(Array.isArray(insp) ? insp : [])
       
       // Cache for instant re-visit within same session
@@ -107,6 +112,7 @@ export default function DashboardPage() {
         mis: newMIS,
         leaders: newLeaders,
         battery: battery,
+        power: power,
         inspections: Array.isArray(insp) ? insp : []
       }))
     } catch (e) {
@@ -339,6 +345,52 @@ export default function DashboardPage() {
                 >
                   Start First Inspection
                 </button>
+              </div>
+            )}
+          </div>
+
+          <div className="card glass-panel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '24px', padding: '24px' }}>
+            <div className="chart-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <span className="flex items-center gap-2 text-white/90">
+                <span className="text-xl">⚡</span>
+                <span className="font-black uppercase tracking-widest text-[11px]">Power Consumption (TS-7)</span>
+              </span>
+            </div>
+
+            {powerStats ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Today's Usage</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl font-black text-white">{powerStats.today ? formatPowerValue(powerStats.today.totalConsumption / 1000) : '0.00'}</span>
+                      <span className="text-[10px] font-bold text-blue-400">MWh</span>
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Monthly Total</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xl font-black text-white">{powerStats.monthly ? formatPowerValue(powerStats.monthly.total / 1000) : '0.00'}</span>
+                      <span className="text-[10px] font-bold text-purple-400">MWh</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                    Avg Daily Load: {powerStats.monthly ? formatPowerValue(powerStats.monthly.average) : '0.00'} kWh
+                  </span>
+                  <button 
+                    className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
+                    onClick={() => router.push('/dashboard/power-consumption')}
+                  >
+                    View Monitor →
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-slate-500">
+                <span className="spinner" />
               </div>
             )}
           </div>
