@@ -33,6 +33,7 @@ model User {
   reportedUsages       SparePartUsage[] @relation("ReportedUsage")
   approvedUsages       SparePartUsage[] @relation("ApprovedUsage")
   batteryInspections   BatteryInspection[]
+  powerReadings        PowerReading[]
 }
 
 // ... existing models ...
@@ -278,4 +279,31 @@ model SparePartUsage {
   reason        String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model PowerReading {
+  id                String   @id @default(cuid())
+  date              DateTime @unique
+  
+  // Readings (Incomers in MWh, Outgoings in kWh)
+  incomer1          Float    // Incomer 1 (MWh)
+  incomer2          Float    // Incomer 2 (MWh)
+  
+  outgoing1_TS12    Float    // Outgoing 1 – TS-12 (kWh)
+  outgoing1_TS13    Float    // Outgoing 1 – TS-13 (kWh)
+  outgoing1_TS19_24 Float    // Outgoing 1 – TS-19 to TS-24 (kWh)
+  
+  outgoing2_TS12    Float    // Outgoing 2 – TS-12 (kWh)
+  outgoing2_TS13    Float    // Outgoing 2 – TS-13 (kWh)
+  outgoing2_TS19_24 Float    // Outgoing 2 – TS-19 to TS-24 (kWh)
+  
+  // Calculated Values (all in kWh)
+  totalConsumption  Float    // (I1 + I2)*1000 - Sum(O)
+  dailyConsumption  Float    // Today's total - Yesterday's total
+  
+  createdById       String?
+  createdBy         User?    @relation(fields: [createdById], references: [id])
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }

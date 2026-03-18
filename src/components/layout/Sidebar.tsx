@@ -16,6 +16,7 @@ const navItems = [
   { section: 'Maintenance', items: [
     { href: '/dashboard/mis', icon: '📋', label: 'Daily MIS', roles: ['ENGINEER', 'SUPERVISOR'] },
     { href: '/dashboard/battery-inspection', icon: '🔋', label: 'Battery Inspection' },
+    { href: '/dashboard/power-consumption', icon: '⚡', label: 'Power Consumption' },
     { href: '/dashboard/upload', icon: '📸', label: 'Upload Activity' },
     { href: '/dashboard/gallery', icon: '🖼️', label: 'Image Gallery' },
     { href: '/dashboard/history', icon: '📜', label: 'History' },

@@ -450,6 +450,7 @@ export default function DashboardPage() {
               { label: '📋 New MIS Entry', href: '/dashboard/mis', color: 'btn-primary' },
               { label: '📸 Upload Activity', href: '/dashboard/upload', color: 'btn-success' },
               { label: '🤖 Ask VoltMind AI', href: '/dashboard/ai-assistant', color: 'btn-secondary' },
+              { label: '⚡ Power Consumption', href: '/dashboard/power-consumption', color: 'btn-secondary' },
               { label: '💬 Team Chat', href: '/dashboard/chat', color: 'btn-secondary' },
               { label: '📄 Generate Report', href: '/dashboard/reports', color: 'btn-secondary' },
             ].map((a, i) => (
