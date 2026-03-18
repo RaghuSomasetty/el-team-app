@@ -36,6 +36,20 @@ export async function GET() {
     if (latestInspection.criticalCount > 0) status = 'CRITICAL'
     else if (latestInspection.warningCount > 0) status = 'WARNING'
 
+    // Get section-wise average voltages
+    const sectionReadings = await prisma.batteryReading.groupBy({
+      by: ['section'],
+      where: { inspectionId: latestInspection.id },
+      _avg: {
+        voltage: true
+      }
+    })
+
+    const sectionVoltages = sectionReadings.map(r => ({
+      section: r.section,
+      avgVoltage: r._avg.voltage ? parseFloat(r._avg.voltage.toFixed(2)) : null
+    }))
+
     const stats = {
       hasData: true,
       inspectionId: latestInspection.id,
@@ -46,7 +60,8 @@ export async function GET() {
       recommendation: (latestInspection.recommendations || '').split('|')[0].trim(),
       criticalCount: latestInspection.criticalCount,
       warningCount: latestInspection.warningCount,
-      healthyCount: latestInspection.healthyCount
+      healthyCount: latestInspection.healthyCount,
+      sections: sectionVoltages
     }
 
     return NextResponse.json(stats)
