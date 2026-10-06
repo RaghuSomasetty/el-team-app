@@ -10,7 +10,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } })
+    const cleanEmail = email.trim().toLowerCase()
+
+    const existing = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: cleanEmail,
+          mode: 'insensitive',
+        },
+      },
+    })
     if (existing) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 })
     }
@@ -26,7 +35,14 @@ export async function POST(req: Request) {
     const role = roleMap[designation] || 'TECHNICIAN'
 
     const user = await prisma.user.create({
-      data: { name, email, phone, designation, passwordHash, role },
+      data: {
+        name: name.trim(),
+        email: cleanEmail,
+        phone: phone ? phone.trim() : null,
+        designation,
+        passwordHash,
+        role,
+      },
     })
 
     return NextResponse.json({

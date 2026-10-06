@@ -15,9 +15,10 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
+    const cleanEmail = form.email.trim().toLowerCase()
     const result = await signIn('credentials', {
       redirect: false,
-      email: form.email,
+      email: cleanEmail,
       password: form.password,
       remember: form.remember.toString(),
     })
@@ -32,7 +33,7 @@ export default function LoginPage() {
       router.push('/dashboard')
     } else {
       console.error('Sign-in failed with error:', result?.error)
-      setError(result?.error || 'Invalid email or password. Please try again.')
+      setError('Invalid email or password. Please check your credentials and try again.')
     }
     setLoading(false)
   }
@@ -116,6 +117,10 @@ export default function LoginPage() {
                 placeholder="your@email.com"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoComplete="username"
                 required
               />
             </div>
@@ -128,6 +133,7 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
+                autoComplete="current-password"
                 required
               />
             </div>

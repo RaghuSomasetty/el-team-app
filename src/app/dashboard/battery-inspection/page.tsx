@@ -125,11 +125,33 @@ export default function BatteryInspectionDashboard() {
                         </div>
                       </td>
                       <td style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '0 16px 16px 0', border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', textAlign: 'right' }}>
-                        <Link href={`/dashboard/battery-inspection/${ins.id}`}>
-                          <button className="btn btn-sm btn-outline hover-glow group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500 transition-all flex items-center justify-center ml-auto" style={{ fontSize: '11px', fontWeight: 700, borderRadius: '10px', padding: '6px 16px', gap: '6px' }}>
-                            View Report <ArrowRight size={12} />
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!confirm(`Delete battery inspection from ${new Date(ins.date).toLocaleDateString()}?`)) return;
+                              const res = await fetch(`/api/battery-inspections?id=${ins.id}`, { method: 'DELETE' });
+                              if (res.ok) {
+                                setInspections(prev => prev.filter(p => p.id !== ins.id));
+                              } else {
+                                alert('Failed to delete');
+                              }
+                            }}
+                            style={{
+                              padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: 700,
+                              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                              color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s',
+                            }}
+                            title="Delete inspection"
+                          >
+                            🗑
                           </button>
-                        </Link>
+                          <Link href={`/dashboard/battery-inspection/${ins.id}`}>
+                            <button className="btn btn-sm btn-outline hover-glow group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500 transition-all flex items-center justify-center" style={{ fontSize: '11px', fontWeight: 700, borderRadius: '10px', padding: '6px 16px', gap: '6px' }}>
+                              View Report <ArrowRight size={12} />
+                            </button>
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

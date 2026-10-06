@@ -822,6 +822,25 @@ body:has(.ai-assistant-page) {
 .animate-fade-in { animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 .animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
+/* Winner Announcement Animations */
+.winner-particle {
+  animation: winner-float 4s ease-in-out infinite;
+}
+@keyframes winner-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-15px) scale(1.3); opacity: 1; }
+}
+.winner-trophy-glow {
+  animation: trophy-glow 3s ease-in-out infinite;
+}
+@keyframes trophy-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(234,179,8,0.15); }
+  50% { box-shadow: 0 0 30px rgba(234,179,8,0.35), 0 0 60px rgba(234,179,8,0.1); }
+}
+@media (max-width: 768px) {
+  .winner-particle { display: none !important; }
+}
+
 .glass {
   background: rgba(26, 34, 53, 0.7);
   backdrop-filter: blur(12px);

@@ -44,7 +44,25 @@ export default function HistoryPage() {
                 <span className="tag" style={{ marginRight: '8px' }}>{a.tagNumber || 'NO-TAG'}</span>
                 <strong style={{ fontSize: '14px' }}>{a.equipmentName}</strong>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Delete activity "${a.equipmentName}"?`)) return;
+                      const res = await fetch(`/api/activities?id=${a.id}`, { method: 'DELETE' });
+                      if (res.ok) fetchHistory();
+                      else alert('Failed to delete');
+                    }}
+                    style={{
+                      padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                      background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                      color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s',
+                    }}
+                    title="Delete activity"
+                  >
+                    🗑
+                  </button>
+                </div>
                 <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{new Date(a.completedAt).toLocaleString('en-IN')}</div>
                 <div style={{ fontSize: '12px', color: 'var(--accent-cyan)' }}>{a.technicianName}</div>
               </div>

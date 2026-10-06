@@ -165,3 +165,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Failed to fetch inspections' }, { status: 500 })
   }
 }
+
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+
+  try {
+    // Delete readings first (child records), then the inspection
+    await prisma.batteryReading.deleteMany({ where: { inspectionId: id } })
+    await prisma.batteryInspection.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}

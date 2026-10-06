@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { syncAndNotify } from '@/lib/syncManager'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -31,6 +32,23 @@ export default function PWARegister() {
     }
 
     registerAndSubscribe()
+
+    // ─── Offline Sync ───
+    // Sync pending requests when coming back online
+    const handleOnline = () => {
+      console.log('[PWA] Back online — syncing pending requests...')
+      syncAndNotify()
+    }
+    window.addEventListener('online', handleOnline)
+
+    // Also try syncing on startup if there are pending items
+    if (navigator.onLine) {
+      syncAndNotify()
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+    }
   }, [])
 
   return null

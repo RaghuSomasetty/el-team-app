@@ -19,13 +19,14 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
+      const cleanEmail = form.email.trim().toLowerCase()
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: form.name, 
-          email: form.email, 
-          phone: form.phone, 
+          name: form.name.trim(), 
+          email: cleanEmail, 
+          phone: form.phone ? form.phone.trim() : '', 
           designation: form.designation, 
           password: form.password,
         }),
@@ -82,7 +83,7 @@ export default function RegisterPage() {
               <div className="grid-2">
                 <div className="form-group">
                   <label className="form-label">Email</label>
-                  <input id="reg-email" type="email" className="form-input" placeholder="email@plant.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
+                  <input id="reg-email" type="email" className="form-input" placeholder="email@plant.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Phone</label>

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import OpenAI from 'openai'
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import mammoth from 'mammoth'
 import * as xlsx from 'xlsx'
 
@@ -102,14 +102,14 @@ export async function POST(req: Request) {
   const tag = extractTag(q)
   const intent = detectIntent(q)
 
-  // All questions go through OpenAI with full context — no local shortcut
+  // All questions go through Gemini with full context — no local shortcut
 
-  // ── OpenAI brain: handles everything else with full plant context ──────────
-  const openaiKey = process.env.OPENAI_API_KEY
-  console.log('OPENAI_API_KEY present:', !!openaiKey, 'length:', openaiKey?.length)
-  if (openaiKey && openaiKey.length > 10) {
+  // ── Gemini brain: handles everything with full plant context ───────────────
+  const geminiKey = process.env.GEMINI_API_KEY
+  console.log('GEMINI_API_KEY present:', !!geminiKey, 'length:', geminiKey?.length)
+  if (geminiKey && geminiKey.length > 10) {
     try {
-      const openai = new OpenAI({ apiKey: openaiKey })
+      const genAI = new GoogleGenerativeAI(geminiKey)
 
       // ── Gather COMPLETE context from ALL database tables ──────────────────
       const today = new Date(); today.setHours(0,0,0,0)
@@ -256,188 +256,188 @@ ${specificMotorContext}
 - **Structured Data**: If the user asks for a report, list, or summary of data, provide row data as a simple array of arrays.
 `
 
-      // ── Define DB write tools for function calling ────────────────────────
+      // ── Define DB write tools for function calling (Gemini format) ─────────
       const tools: any[] = [
         {
-          type: 'function',
-          function: {
-            name: 'add_mis_entry',
-            description: 'Add a new MIS (Maintenance Information System) daily entry to the database',
-            parameters: {
-              type: 'object',
-              properties: {
-                equipmentName: { type: 'string', description: 'Name of the equipment' },
-                area: { type: 'string', description: 'Area/location of the equipment' },
-                workType: { type: 'string', enum: ['BREAKDOWN', 'PREVENTIVE', 'CORRECTIVE', 'INSPECTION', 'OTHER'], description: 'Type of maintenance work' },
-                shift: { type: 'string', enum: ['A', 'B', 'C', 'General'], description: 'Shift when work was done' },
-                description: { type: 'string', description: 'Detailed description of the work done' },
-                technicianName: { type: 'string', description: 'Name of the technician who did the work' },
+          functionDeclarations: [
+            {
+              name: 'add_mis_entry',
+              description: 'Add a new MIS (Maintenance Information System) daily entry to the database',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  equipmentName: { type: SchemaType.STRING, description: 'Name of the equipment' },
+                  area: { type: SchemaType.STRING, description: 'Area/location of the equipment' },
+                  workType: { type: SchemaType.STRING, description: 'Type of maintenance work. Must be one of: BREAKDOWN, PREVENTIVE, CORRECTIVE, INSPECTION, OTHER' },
+                  shift: { type: SchemaType.STRING, description: 'Shift when work was done. Must be one of: A, B, C, General' },
+                  description: { type: SchemaType.STRING, description: 'Detailed description of the work done' },
+                  technicianName: { type: SchemaType.STRING, description: 'Name of the technician who did the work' },
+                },
+                required: ['equipmentName', 'area', 'workType', 'shift', 'description'],
               },
-              required: ['equipmentName', 'area', 'workType', 'shift', 'description'],
             },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'update_motor_status',
-            description: 'Update the running status of a motor in the database',
-            parameters: {
-              type: 'object',
-              properties: {
-                motorTag: { type: 'string', description: 'Motor tag number e.g. 21.65.01' },
-                status: { type: 'string', enum: ['RUNNING', 'STOPPED', 'MAINTENANCE', 'FAULT'], description: 'New status of the motor' },
+            {
+              name: 'update_motor_status',
+              description: 'Update the running status of a motor in the database',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  motorTag: { type: SchemaType.STRING, description: 'Motor tag number e.g. 21.65.01' },
+                  status: { type: SchemaType.STRING, description: 'New status of the motor. Must be one of: RUNNING, STOPPED, MAINTENANCE, FAULT' },
+                },
+                required: ['motorTag', 'status'],
               },
-              required: ['motorTag', 'status'],
             },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'add_maintenance_history',
-            description: 'Add a maintenance history record for a motor or equipment',
-            parameters: {
-              type: 'object',
-              properties: {
-                equipmentTag: { type: 'string', description: 'Equipment/motor tag number' },
-                equipmentName: { type: 'string', description: 'Equipment name' },
-                maintenanceType: { type: 'string', enum: ['GREASING', 'BEARING_CHANGE', 'WINDING_CHECK', 'VIBRATION_CHECK', 'ALIGNMENT', 'COUPLING_CHANGE', 'OVERHAUL', 'INSPECTION', 'BREAKDOWN', 'OTHER'], description: 'Type of maintenance' },
-                description: { type: 'string', description: 'Description of work done' },
-                technicianName: { type: 'string', description: 'Name of the technician' },
-                performedAt: { type: 'string', description: 'Date performed in ISO format (optional, defaults to now)' },
+            {
+              name: 'add_maintenance_history',
+              description: 'Add a maintenance history record for a motor or equipment',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  equipmentTag: { type: SchemaType.STRING, description: 'Equipment/motor tag number' },
+                  equipmentName: { type: SchemaType.STRING, description: 'Equipment name' },
+                  maintenanceType: { type: SchemaType.STRING, description: 'Type of maintenance. Must be one of: GREASING, BEARING_CHANGE, WINDING_CHECK, VIBRATION_CHECK, ALIGNMENT, COUPLING_CHANGE, OVERHAUL, INSPECTION, BREAKDOWN, OTHER' },
+                  description: { type: SchemaType.STRING, description: 'Description of work done' },
+                  technicianName: { type: SchemaType.STRING, description: 'Name of the technician' },
+                  performedAt: { type: SchemaType.STRING, description: 'Date performed in ISO format (optional, defaults to now)' },
+                },
+                required: ['equipmentTag', 'equipmentName', 'maintenanceType', 'description', 'technicianName'],
               },
-              required: ['equipmentTag', 'equipmentName', 'maintenanceType', 'description', 'technicianName'],
             },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'report_spare_part_usage',
-            description: 'Report that a spare part was used. This will create a pending request for engineer approval. Stock is NOT deducted until approved.',
-            parameters: {
-              type: 'object',
-              properties: {
-                partNumber: { type: 'string', description: 'Part number of the spare part' },
-                partName: { type: 'string', description: 'Name of the spare part (use if partNumber is unknown)' },
-                quantityUsed: { type: 'number', description: 'Quantity used in the maintenance activity' },
-                reason: { type: 'string', description: 'Why this part was used (e.g. bearing failed)' },
+            {
+              name: 'report_spare_part_usage',
+              description: 'Report that a spare part was used. This will create a pending request for engineer approval. Stock is NOT deducted until approved.',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  partNumber: { type: SchemaType.STRING, description: 'Part number of the spare part' },
+                  partName: { type: SchemaType.STRING, description: 'Name of the spare part (use if partNumber is unknown)' },
+                  quantityUsed: { type: SchemaType.NUMBER, description: 'Quantity used in the maintenance activity' },
+                  reason: { type: SchemaType.STRING, description: 'Why this part was used (e.g. bearing failed)' },
+                },
+                required: ['quantityUsed'],
               },
-              required: ['quantityUsed'],
             },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'approve_spare_part_usage',
-            description: 'Approve a pending spare part usage request. Only for Engineers/Supervisors.',
-            parameters: {
-              type: 'object',
-              properties: {
-                usageId: { type: 'string', description: 'ID of the usage request to approve' },
-                status: { type: 'string', enum: ['APPROVED', 'REJECTED'], description: 'Whether to approve or reject' },
-                reason: { type: 'string', description: 'Reason for approval/rejection' },
+            {
+              name: 'approve_spare_part_usage',
+              description: 'Approve a pending spare part usage request. Only for Engineers/Supervisors.',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  usageId: { type: SchemaType.STRING, description: 'ID of the usage request to approve' },
+                  status: { type: SchemaType.STRING, description: 'Whether to approve or reject. Must be one of: APPROVED, REJECTED' },
+                  reason: { type: SchemaType.STRING, description: 'Reason for approval/rejection' },
+                },
+                required: ['usageId', 'status'],
               },
-              required: ['usageId', 'status'],
             },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'add_spare_part',
-            description: 'Add a brand new spare part to the database',
-            parameters: {
-              type: 'object',
-              properties: {
-                partName: { type: 'string', description: 'Name of the new part' },
-                partNumber: { type: 'string', description: 'Part number for the new part' },
-                quantity: { type: 'number', description: 'Initial quantity in stock' },
-                category: { type: 'string', description: 'Equipment or Category (e.g., Motor, Bearing, Cable)' },
-                location: { type: 'string', description: 'Storage location' },
-                supplier: { type: 'string', description: 'Supplier name' },
+            {
+              name: 'add_spare_part',
+              description: 'Add a brand new spare part to the database',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  partName: { type: SchemaType.STRING, description: 'Name of the new part' },
+                  partNumber: { type: SchemaType.STRING, description: 'Part number for the new part' },
+                  quantity: { type: SchemaType.NUMBER, description: 'Initial quantity in stock' },
+                  category: { type: SchemaType.STRING, description: 'Equipment or Category (e.g., Motor, Bearing, Cable)' },
+                  location: { type: SchemaType.STRING, description: 'Storage location' },
+                  supplier: { type: SchemaType.STRING, description: 'Supplier name' },
+                },
+                required: ['partName', 'partNumber', 'quantity'],
               },
-              required: ['partName', 'partNumber', 'quantity'],
             },
-          },
-        },
-        {
-          type: 'function',
-          function: {
-            name: 'add_motor_inspection',
-            description: 'Record a motor inspection with current readings and observations',
-            parameters: {
-              type: 'object',
-              properties: {
-                motorTag: { type: 'string', description: 'Motor tag number' },
-                motorName: { type: 'string', description: 'Motor name' },
-                inspectedBy: { type: 'string', description: 'Name of inspector' },
-                shift: { type: 'string', enum: ['A', 'B', 'C', 'General'] },
-                currentR: { type: 'number', description: 'R phase current in Amps' },
-                currentY: { type: 'number', description: 'Y phase current in Amps' },
-                currentB: { type: 'number', description: 'B phase current in Amps' },
-                abnormality: { type: 'string', description: 'Any abnormality observed (leave empty if none)' },
-                remarks: { type: 'string', description: 'Additional remarks' },
+            {
+              name: 'add_motor_inspection',
+              description: 'Record a motor inspection with current readings and observations',
+              parameters: {
+                type: SchemaType.OBJECT,
+                properties: {
+                  motorTag: { type: SchemaType.STRING, description: 'Motor tag number' },
+                  motorName: { type: SchemaType.STRING, description: 'Motor name' },
+                  inspectedBy: { type: SchemaType.STRING, description: 'Name of inspector' },
+                  shift: { type: SchemaType.STRING, description: 'Shift. Must be one of: A, B, C, General' },
+                  currentR: { type: SchemaType.NUMBER, description: 'R phase current in Amps' },
+                  currentY: { type: SchemaType.NUMBER, description: 'Y phase current in Amps' },
+                  currentB: { type: SchemaType.NUMBER, description: 'B phase current in Amps' },
+                  abnormality: { type: SchemaType.STRING, description: 'Any abnormality observed (leave empty if none)' },
+                  remarks: { type: SchemaType.STRING, description: 'Additional remarks' },
+                },
+                required: ['motorTag', 'motorName', 'inspectedBy', 'shift'],
               },
-              required: ['motorTag', 'motorName', 'inspectedBy', 'shift'],
             },
-          },
+          ],
         },
       ]
 
-      // ── Step 1: Ask OpenAI with tools ─────────────────────────────────────
-      const messages: any[] = [
-        { role: 'system', content: systemPrompt },
-      ]
+      // ── Initialise Gemini model with system instruction & tools ────────────
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.0-flash',
+        systemInstruction: systemPrompt,
+        tools,
+      })
+
+      // ── Build conversation contents for Gemini ────────────────────────────
+      const contents: any[] = []
 
       // Add History (limit to last 10 for safety)
-      const recentHistory = history.slice(-10).map((h: any) => ({
-        role: h.role === 'user' ? 'user' : 'assistant',
-        content: h.content
-      })).filter((h: any) => h.content && typeof h.content === 'string')
-      
-      messages.push(...recentHistory)
+      const recentHistory = history.slice(-10).filter((h: any) => h.content && typeof h.content === 'string')
+      for (const h of recentHistory) {
+        contents.push({
+          role: h.role === 'user' ? 'user' : 'model',
+          parts: [{ text: h.content }],
+        })
+      }
+
+      // Build user message parts
+      const userParts: any[] = []
 
       if (attachments && attachments.length > 0) {
-        const contentParts: any[] = [{ type: 'text', text: question || 'Please process the attached file(s).' }]
+        userParts.push({ text: question || 'Please process the attached file(s).' })
         
         for (const att of attachments) {
           if (att.type === 'image') {
-            contentParts.push({
-              type: 'image_url',
-              image_url: { url: att.data, detail: 'auto' }
+            // Gemini inline image data
+            const base64Data = att.data.split(',')[1]
+            userParts.push({
+              inlineData: {
+                data: base64Data,
+                mimeType: att.mimeType || 'image/jpeg',
+              },
             })
           } else {
             const parsedText = await parseAttachment(att)
-            contentParts[0].text += parsedText
+            userParts[0].text += parsedText
           }
         }
-        messages.push({ role: 'user', content: contentParts })
       } else {
-        messages.push({ role: 'user', content: question })
+        userParts.push({ text: question })
       }
 
-      const firstCall = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages,
-        tools,
-        tool_choice: 'auto',
-        max_tokens: 1000,
-        temperature: 0.2,
-      })
+      contents.push({ role: 'user', parts: userParts })
 
-      const firstChoice = firstCall.choices[0]
+      // ── Step 1: Ask Gemini with tools ─────────────────────────────────────
+      const firstResult = await model.generateContent({ contents })
+      const firstResponse = firstResult.response
+      const firstCandidate = firstResponse.candidates?.[0]
 
-      // ── Step 2: Handle tool calls (DB writes) ─────────────────────────────
-      if (firstChoice.finish_reason === 'tool_calls' && firstChoice.message.tool_calls) {
+      if (!firstCandidate) {
+        return NextResponse.json({
+          answer: '⚠️ No response generated by AI. Please try again.',
+          type: 'error',
+        })
+      }
+
+      // ── Step 2: Handle function calls (DB writes) ─────────────────────────
+      const functionCalls = firstCandidate.content.parts.filter((p: any) => p.functionCall)
+
+      if (functionCalls.length > 0) {
         const toolResults: string[] = []
-        messages.push(firstChoice.message)
+        const functionResponseParts: any[] = []
 
-        for (const toolCall of firstChoice.message.tool_calls as any[]) {
-          const fnName = toolCall.function.name
-          const args = JSON.parse(toolCall.function.arguments)
+        for (const part of functionCalls) {
+          const fnName = part.functionCall!.name
+          const args = part.functionCall!.args as any
           let result = ''
 
           try {
@@ -564,29 +564,35 @@ ${specificMotorContext}
           }
 
           toolResults.push(result)
-          messages.push({ role: 'tool', tool_call_id: toolCall.id, content: result })
+          functionResponseParts.push({
+            functionResponse: {
+              name: fnName,
+              response: { result },
+            },
+          })
         }
 
         // ── Step 3: Get final answer after tool execution ─────────────────
-        const secondCall = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages,
-          max_tokens: 800,
-          temperature: 0.2,
-        })
+        const followUpContents = [
+          ...contents,
+          { role: 'model', parts: firstCandidate.content.parts },
+          { role: 'user', parts: functionResponseParts },
+        ]
+
+        const secondResult = await model.generateContent({ contents: followUpContents })
+        const secondResponse = secondResult.response
 
         return NextResponse.json({
-          answer: secondCall.choices[0].message.content ?? 'Done.',
+          answer: secondResponse.text() ?? 'Done.',
           type: 'ai_action',
           actions: toolResults,
           alerts,
         })
       }
 
-      // Post-process OpenAI answer to see if it looks like a report/list
-      // If it has tables or list markers, we can try to extract data for the report button
+      // Post-process Gemini answer to see if it looks like a report/list
       let reportData = null
-      const answer = firstChoice.message.content || ''
+      const answer = firstResponse.text() || ''
       
       if (q.includes('spare') || q.includes('part') || q.includes('stock')) {
         reportData = {
@@ -608,26 +614,26 @@ ${specificMotorContext}
         }
       }
 
-      // No tool call — plain answer
+      // No function call — plain answer
       return NextResponse.json({
-        answer: firstChoice.message.content ?? 'No response generated.',
+        answer: firstResponse.text() ?? 'No response generated.',
         type: reportData ? 'report' : 'ai_response',
         reportData,
         alerts,
       })
     } catch (err: any) {
-      console.error('OpenAI error:', err.message)
+      console.error('Gemini error:', err.message)
       return NextResponse.json({
-        answer: `⚠️ **AI Error:** ${err.message}\n\nPlease check the OpenAI API key is valid in Vercel environment variables.`,
+        answer: `⚠️ **AI Error:** ${err.message}\n\nPlease check the Gemini API key is valid in Vercel environment variables.`,
         type: 'error',
         debug_error: err.message,
       })
     }
   } else {
-    console.log('No valid OPENAI_API_KEY — using local fallback. Key value length:', openaiKey?.length ?? 0)
+    console.log('No valid GEMINI_API_KEY — using local fallback. Key value length:', geminiKey?.length ?? 0)
   }
 
-  // ── Local fallbacks (no OpenAI key) ──────────────────────────────────────
+  // ── Local fallbacks (no Gemini key) ──────────────────────────────────────
   if (q.includes('spare') || q.includes('part') || q.includes('stock')) {
     const parts = await prisma.sparePart.findMany({ take: 50, orderBy: { partName: 'asc' } })
     const lines = parts.map(p => `- **${p.partName}** (${p.partNumber}): Qty ${p.quantity} @ ${p.location || 'Warehouse'}`).join('\n')
@@ -683,7 +689,7 @@ ${specificMotorContext}
       `- **MIS**: "Show this month's MIS"\n` +
       `- **Spare parts**: "Show spare parts stock"\n` +
       `- **Document/Image Analysis**: "Summarize the attached PDF/Excel/Word/CSV or analyze the Image"\n\n` +
-      `💡 _Add an OpenAI API key in \`.env.local\` as \`OPENAI_API_KEY\` to enable full AI chat._`,
+      `💡 _Add a Gemini API key in \`.env.local\` as \`GEMINI_API_KEY\` to enable full AI chat._`,
     type: 'help',
   })
 }

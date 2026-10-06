@@ -43,16 +43,21 @@ export async function GET(req: Request) {
     const totalMonthlyConsumption = monthlyReadings.reduce((sum: number, r: any) => sum + r.totalConsumption, 0);
     const avgDailyConsumption = monthlyReadings.length > 0 ? totalMonthlyConsumption / monthlyReadings.length : 0;
     
+    // Calculate Peak Load (kVA proxy using max totalConsumption)
+    let peakLoad = 0;
     let maxDay: any = null;
     let minDay: any = null;
     if (monthlyReadings.length > 0) {
       maxDay = monthlyReadings.reduce((max: any, r: any) => (r.totalConsumption > max.totalConsumption ? r : max), monthlyReadings[0]);
       minDay = monthlyReadings.reduce((min: any, r: any) => (r.totalConsumption < min.totalConsumption ? r : min), monthlyReadings[0]);
+      peakLoad = Math.max(...monthlyReadings.map((r: any) => r.totalConsumption));
     }
 
-    // 4. Chart Data: Daily Trends
+    // 4. Chart Data: Daily/Periodic Trends
+    // We'll map all readings for the trend so the chart can show sub-daily progression if available
     const trends = monthlyReadings.map((r: any) => ({
-      date: r.date.toISOString().split('T')[0],
+      date: r.date.toISOString(),
+      label: r.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       totalConsumption: r.totalConsumption,
       dailyConsumption: r.dailyConsumption,
     }));
@@ -70,6 +75,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       today: todayReading || null,
+      peakLoad: peakLoad,
       monthly: {
         total: totalMonthlyConsumption,
         average: avgDailyConsumption,

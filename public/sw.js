@@ -1,26 +1,67 @@
-const CACHE_NAME = 'elteam-v1';
+const CACHE_NAME = 'elteam-v2';
+const API_CACHE = 'elteam-api-v1';
 
+// Pages & assets to pre-cache on install
+const PRECACHE_URLS = [
+  '/',
+  '/dashboard',
+  '/dashboard/power-consumption',
+  '/dashboard/power-consumption/entry',
+  '/dashboard/power-consumption/reports',
+  '/dashboard/battery-inspection',
+  '/dashboard/battery-inspection/new',
+  '/dashboard/motors',
+  '/dashboard/inspections',
+  '/dashboard/mis',
+  '/dashboard/equipment',
+  '/dashboard/spare-parts',
+  '/dashboard/upload',
+  '/dashboard/analytics',
+  '/dashboard/leaderboard',
+  '/dashboard/profile',
+  '/dashboard/chat',
+  '/dashboard/search',
+  '/dashboard/gallery',
+  '/dashboard/history',
+  '/dashboard/ai-assistant',
+  '/manifest.json',
+];
+
+// API routes that are safe to cache (GET-only, read data)
+const CACHEABLE_API_ROUTES = [
+  '/api/power-readings/stats',
+  '/api/motors',
+  '/api/activities',
+  '/api/leaderboard',
+  '/api/dashboard/battery-stats',
+  '/api/inspections',
+  '/api/battery-inspections',
+  '/api/spare-parts',
+  '/api/equipment',
+  '/api/user/profile',
+  '/api/reports/monthly',
+];
+
+// ─── Install ───
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/dashboard',
-        '/manifest.json',
-        '/icons/icon-192x192.png',
-        '/icons/icon-512x512.png',
-      ]);
+      // Don't fail install if some pages aren't built yet
+      return cache.addAll(PRECACHE_URLS).catch(() => {
+        console.warn('[SW] Some precache URLs failed, continuing...');
+      });
     })
   );
   self.skipWaiting();
 });
 
+// ─── Activate ───
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keyList) => {
       return Promise.all(
         keyList.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key !== CACHE_NAME && key !== API_CACHE) {
             return caches.delete(key);
           }
         })
@@ -30,17 +71,46 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// A simple network-first strategy, falling back to cache
+// ─── Fetch Strategy ───
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  
-  // Don't cache API routes to avoid stale data
-  if (e.request.url.includes('/api/')) return;
 
+  const url = new URL(e.request.url);
+
+  // API routes: stale-while-revalidate for cacheable APIs
+  if (url.pathname.startsWith('/api/')) {
+    const isCacheable = CACHEABLE_API_ROUTES.some(route => url.pathname.startsWith(route));
+    
+    if (isCacheable) {
+      e.respondWith(
+        caches.open(API_CACHE).then(async (cache) => {
+          const cachedResponse = await cache.match(e.request);
+          
+          const fetchPromise = fetch(e.request).then((networkResponse) => {
+            if (networkResponse.ok) {
+              cache.put(e.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => {
+            // Offline — return cached if available
+            return cachedResponse;
+          });
+
+          // Return cached immediately while revalidating in background
+          return cachedResponse || fetchPromise;
+        })
+      );
+      return;
+    }
+
+    // Non-cacheable API routes — just pass through
+    return;
+  }
+
+  // Page/asset routes: network-first, fallback to cache
   e.respondWith(
     fetch(e.request)
       .then((response) => {
-        // Clone the response and save it to the cache
         const resClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(e.request, resClone);
@@ -48,15 +118,19 @@ self.addEventListener('fetch', (e) => {
         return response;
       })
       .catch(() => {
-        // If network fails, try the cache
         return caches.match(e.request).then((response) => {
           if (response) return response;
-          // Could return a custom offline page here if needed
+
+          // For navigation requests, return the cached dashboard shell
+          if (e.request.mode === 'navigate') {
+            return caches.match('/dashboard');
+          }
         });
       })
   );
 });
-// Push notification event listener
+
+// ─── Push Notifications ───
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   
@@ -80,7 +154,7 @@ self.addEventListener('push', (event) => {
   }
 });
 
-// Notification click event listener
+// ─── Notification Click ───
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
@@ -88,14 +162,12 @@ self.addEventListener('notificationclick', (event) => {
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // If a window is already open, focus it
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
         if (client.url === urlToOpen && 'focus' in client) {
           return client.focus();
         }
       }
-      // If no window is open, open a new one
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }

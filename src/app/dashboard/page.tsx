@@ -4,7 +4,6 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import FadeIn from '@/components/animations/FadeIn'
-import WeeklyWinnerBanner from '@/components/dashboard/WeeklyWinnerBanner'
 import { formatPowerValue } from '@/lib/powerUtils'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line
@@ -142,7 +141,6 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout title="Dashboard" subtitle="Electrical Maintenance Overview">
-      <WeeklyWinnerBanner />
       
       {/* Live indicator */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
@@ -156,6 +154,146 @@ export default function DashboardPage() {
           PLANT: TS-7 DRI
         </div>
       </div>
+
+      {/* 🏆 LEADERBOARD WINNER ANNOUNCEMENT */}
+      {leaderboard.length > 0 && (
+        <FadeIn delay={0.15}>
+          <div style={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: '28px',
+            marginBottom: '32px',
+            background: 'linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(168,85,247,0.06) 50%, rgba(59,130,246,0.08) 100%)',
+            border: '1px solid rgba(234,179,8,0.15)',
+            padding: '0',
+          }}>
+            {/* Animated Background Particles */}
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="winner-particle" style={{
+                  position: 'absolute',
+                  width: `${6 + i * 3}px`,
+                  height: `${6 + i * 3}px`,
+                  borderRadius: '50%',
+                  background: i % 2 === 0 ? 'rgba(234,179,8,0.15)' : 'rgba(168,85,247,0.12)',
+                  top: `${10 + i * 15}%`,
+                  left: `${5 + i * 16}%`,
+                  animationDelay: `${i * 0.7}s`,
+                }} />
+              ))}
+              <div style={{
+                position: 'absolute', top: '-50%', right: '-10%',
+                width: '400px', height: '400px', borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(234,179,8,0.06) 0%, transparent 70%)',
+              }} />
+            </div>
+
+            {/* Winner Content */}
+            <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr auto', gap: '24px', padding: '32px 36px', alignItems: 'center' }}>
+              
+              {/* Left: Winner Info */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                  <span style={{
+                    fontSize: '9px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase',
+                    color: '#eab308', background: 'rgba(234,179,8,0.1)', padding: '4px 12px', borderRadius: '20px',
+                    border: '1px solid rgba(234,179,8,0.2)',
+                  }}>
+                    🏆 Weekly Champion
+                  </span>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    {new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
+                  {/* Winner Avatar */}
+                  <div className="winner-trophy-glow" style={{
+                    width: '72px', height: '72px', borderRadius: '20px',
+                    background: 'linear-gradient(135deg, rgba(234,179,8,0.2) 0%, rgba(168,85,247,0.15) 100%)',
+                    border: '2px solid rgba(234,179,8,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '36px', flexShrink: 0,
+                  }}>
+                    🥇
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '28px', fontWeight: 900, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.1 }}>
+                      {leaderboard[0]?.name || 'Loading...'}
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(234,179,8,0.8)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                      {leaderboard[0]?.designation || 'Technician'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Row */}
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px',
+                    }}>⭐</div>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 900, color: '#fbbf24' }}>{leaderboard[0]?.points?.toLocaleString() || 0}</div>
+                      <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Points Earned</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px',
+                    }}>📋</div>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 900, color: '#3b82f6' }}>{leaderboard[0]?.totalActivities || 0}</div>
+                      <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Activities</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Runners Up */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '200px' }}>
+                <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '4px' }}>Runners Up</div>
+                {leaderboard.slice(1, 4).map((u, idx) => (
+                  <div key={u.userId} style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '10px 14px', borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.04)',
+                    transition: 'all 0.2s',
+                  }}>
+                    <span style={{ fontSize: '18px', width: '24px', textAlign: 'center' }}>
+                      {idx === 0 ? '🥈' : idx === 1 ? '🥉' : '4️⃣'}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</div>
+                      <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600 }}>{u.designation}</div>
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: idx === 0 ? '#94a3b8' : idx === 1 ? '#b45309' : 'var(--text-muted)' }}>
+                      {u.points?.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+                <button 
+                  onClick={() => router.push('/dashboard/leaderboard')}
+                  style={{
+                    marginTop: '4px', padding: '8px 16px', borderRadius: '10px',
+                    background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.15)',
+                    color: '#eab308', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase',
+                    letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.2s',
+                    textAlign: 'center',
+                  }}
+                >
+                  View Full Leaderboard →
+                </button>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      )}
 
       {/* Primary Status Grid */}
       <div className="grid-2" style={{ marginBottom: '32px', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))' }}>

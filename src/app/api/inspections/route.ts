@@ -119,3 +119,63 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+export async function DELETE(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+
+  try {
+    const db: any = prisma
+    const model = db.motorInspection || db.MotorInspection
+    await model.delete({ where: { id } })
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function PUT(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  try {
+    const body = await req.json()
+    const { id, currentR, currentY, currentB, abnormality, shift } = body
+    if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+
+    const r = currentR ? parseFloat(currentR) : null
+    const y = currentY ? parseFloat(currentY) : null
+    const b = currentB ? parseFloat(currentB) : null
+
+    const db: any = prisma
+    const model = db.motorInspection || db.MotorInspection
+
+    // Get existing record to recalculate loading
+    const existing = await model.findUnique({ where: { id } })
+    if (!existing) return NextResponse.json({ error: 'Record not found' }, { status: 404 })
+
+    const readings = [r, y, b].filter((v): v is number => v != null && v > 0)
+    const avgCurrent = readings.length ? readings.reduce((sum, val) => sum + val, 0) / readings.length : null
+    const loadingPct = avgCurrent && existing.ratedCurrent ? Math.round((avgCurrent / existing.ratedCurrent) * 100) : null
+
+    const updated = await model.update({
+      where: { id },
+      data: {
+        currentR: r,
+        currentY: y,
+        currentB: b,
+        loadingPct,
+        abnormality: abnormality || null,
+        shift: shift || existing.shift,
+      },
+    })
+
+    return NextResponse.json(updated)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

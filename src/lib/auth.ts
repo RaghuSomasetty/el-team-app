@@ -21,19 +21,34 @@ export const authOptions: NextAuthOptions = {
         }
 
         const email = credentials.email.trim().toLowerCase()
-        const password = credentials.password.trim()
+        const rawPassword = credentials.password
 
-        const user = await prisma.user.findUnique({
+        // Try exact match first, then case-insensitive lookup
+        let user = await prisma.user.findUnique({
           where: { email },
         })
 
         if (!user) {
+          user = await prisma.user.findFirst({
+            where: {
+              email: {
+                equals: email,
+                mode: 'insensitive',
+              },
+            },
+          })
+        }
+
+        if (!user) {
           console.error('User not found:', email)
-          throw new Error('Account not found. Please check your email or register.')
+          return null
         }
 
         console.log('User found, comparing password...')
-        const isValid = await bcrypt.compare(password, user.passwordHash)
+        let isValid = await bcrypt.compare(rawPassword, user.passwordHash)
+        if (!isValid && rawPassword !== rawPassword.trim()) {
+          isValid = await bcrypt.compare(rawPassword.trim(), user.passwordHash)
+        }
         
         if (!isValid) {
           console.error('Invalid password for user:', credentials.email)

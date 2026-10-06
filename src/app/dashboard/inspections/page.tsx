@@ -49,6 +49,7 @@ export default function InspectionsPage() {
   const [inspections, setInspections] = useState<Inspection[]>([])
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({ 
     currentR: '', 
     currentY: '', 
@@ -158,26 +159,49 @@ export default function InspectionsPage() {
     if (!selectedMotor || !form.inspectedBy.trim()) return
     setSaving(true)
     const rated = approxCurrent(selectedMotor.powerKw, selectedMotor.voltage)
-    const res = await fetch('/api/inspections', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        motorTag: selectedMotor.motorTag,
-        motorName: selectedMotor.motorName,
-        area: selectedMotor.area,
-        category: getCategory(selectedMotor.voltage),
-        currentR: form.currentR || null,
-        currentY: form.currentY || null,
-        currentB: form.currentB || null,
-        ratedCurrent: rated,
-        abnormality: form.abnormality || null,
-        inspectedBy: form.inspectedBy,
-        shift: form.shift,
-      }),
-    })
-    if (res.ok) {
-      setForm(f => ({ ...f, currentR: '', currentY: '', currentB: '', abnormality: '' }))
-      await loadInspections(selectedMotor.motorTag)
+
+    if (editingId) {
+      // UPDATE existing record
+      const res = await fetch('/api/inspections', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingId,
+          currentR: form.currentR || null,
+          currentY: form.currentY || null,
+          currentB: form.currentB || null,
+          abnormality: form.abnormality || null,
+          shift: form.shift,
+        }),
+      })
+      if (res.ok) {
+        setEditingId(null)
+        setForm(f => ({ ...f, currentR: '', currentY: '', currentB: '', abnormality: '' }))
+        await loadInspections(selectedMotor.motorTag)
+      }
+    } else {
+      // CREATE new record
+      const res = await fetch('/api/inspections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          motorTag: selectedMotor.motorTag,
+          motorName: selectedMotor.motorName,
+          area: selectedMotor.area,
+          category: getCategory(selectedMotor.voltage),
+          currentR: form.currentR || null,
+          currentY: form.currentY || null,
+          currentB: form.currentB || null,
+          ratedCurrent: rated,
+          abnormality: form.abnormality || null,
+          inspectedBy: form.inspectedBy,
+          shift: form.shift,
+        }),
+      })
+      if (res.ok) {
+        setForm(f => ({ ...f, currentR: '', currentY: '', currentB: '', abnormality: '' }))
+        await loadInspections(selectedMotor.motorTag)
+      }
     }
     setSaving(false)
   }
@@ -301,7 +325,10 @@ export default function InspectionsPage() {
 
               {/* Entry Form */}
               <form onSubmit={handleSubmit} style={{ background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '16px 20px', marginBottom: '16px' }}>
-                <div style={{ fontWeight: 700, marginBottom: '14px', fontSize: '14px' }}>📋 Enter Current Reading</div>
+                <div style={{ fontWeight: 700, marginBottom: '14px', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{editingId ? '✏️ Edit Reading' : '📋 Enter Current Reading'}</span>
+                  {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(f => ({ ...f, currentR: '', currentY: '', currentB: '', abnormality: '' })); }} style={{ fontSize: '11px', color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '6px', padding: '4px 12px', cursor: 'pointer', fontWeight: 600 }}>Cancel Edit</button>}
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px', marginBottom: '12px' }}>
                   {(['R', 'Y', 'B'] as const).map((ph, idx) => (
                     <div key={ph}>
@@ -337,7 +364,7 @@ export default function InspectionsPage() {
 
 
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? '⏳ Saving...' : '✅ Submit Reading'}
+                  {saving ? '⏳ Saving...' : editingId ? '💾 Update Reading' : '✅ Submit Reading'}
                 </button>
               </form>
 
@@ -384,6 +411,7 @@ export default function InspectionsPage() {
                           <th>Loading</th>
                           <th>Abnormality</th>
                           <th>Inspector</th>
+                          <th style={{ textAlign: 'center' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -399,6 +427,48 @@ export default function InspectionsPage() {
                             <td><LoadingBadge pct={r.loadingPct} /></td>
                             <td><AbnormalityBadge text={r.abnormality} /></td>
                             <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{r.inspectedBy}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                <button
+                                  onClick={() => {
+                                    setEditingId(r.id)
+                                    setForm(f => ({
+                                      ...f,
+                                      currentR: r.currentR?.toString() || '',
+                                      currentY: r.currentY?.toString() || '',
+                                      currentB: r.currentB?.toString() || '',
+                                      abnormality: r.abnormality || '',
+                                      shift: r.shift || 'General',
+                                    }))
+                                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                                  }}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                                    background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)',
+                                    color: '#3b82f6', cursor: 'pointer', transition: 'all 0.2s',
+                                  }}
+                                  title="Edit this record"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm(`Delete this inspection record from ${new Date(r.inspectedAt).toLocaleDateString('en-IN')}?`)) return
+                                    const res = await fetch(`/api/inspections?id=${r.id}`, { method: 'DELETE' })
+                                    if (res.ok && selectedMotor) await loadInspections(selectedMotor.motorTag)
+                                    else alert('Failed to delete')
+                                  }}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                                    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                                    color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s',
+                                  }}
+                                  title="Delete this record"
+                                >
+                                  🗑
+                                </button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

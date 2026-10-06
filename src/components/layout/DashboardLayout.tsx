@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Sidebar from './Sidebar'
 import VoltMindWidget from '../ai/VoltMindWidget'
+import OfflineIndicator from '../OfflineIndicator'
 
 interface Props {
   title: string
@@ -94,6 +95,7 @@ export default function DashboardLayout({ title, subtitle, children, actions }: 
         </motion.div>
       </main>
       {(!isAiAssistant && !isChat) && <VoltMindWidget />}
+      <OfflineIndicator />
     </div>
   )
 }

@@ -153,7 +153,7 @@ export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "👋 Hello! I'm **VoltMind AI 2.0**, your neural plant intelligence assistant.\n\nI've been upgraded with **GPT-4o** for advanced industrial reasoning, vision analysis, and **Multilingual support**.\n\nYou can now:\n- Speak to me in any language (Hindi, Telugu, etc.)\n- Upload equipment photos for analysis\n- Ask for complex electrical calculations\n- Update plant data directly via chat\n\nHow can I help you today?",
+      content: "👋 Hello! I'm **VoltMind AI 2.0**, your neural plant intelligence assistant.\n\nI've been upgraded with **Google Gemini** for advanced industrial reasoning, vision analysis, and **Multilingual support**.\n\nYou can now:\n- Speak to me in any language (Hindi, Telugu, etc.)\n- Upload equipment photos for analysis\n- Ask for complex electrical calculations\n- Update plant data directly via chat\n\nHow can I help you today?",
       type: 'welcome',
     }
   ])
